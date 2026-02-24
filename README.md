@@ -21,3 +21,8 @@ API dictionary
 User guide
 Pruebas y commits frecuentes
 Preparar demo para revisión
+
+Correr back uvicorn app.main:app --reload
+Correr front. 
+npm install axios react-router-dom
+npm start
