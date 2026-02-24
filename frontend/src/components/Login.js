@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 
-function Login() {
+export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
@@ -16,33 +16,39 @@ function Login() {
         password,
       });
 
-      localStorage.setItem("token", response.data.access_token);
+      const token = response.data.access_token;
+
+      // Guardar token
+      localStorage.setItem("token", token);
+
+      // Redirigir al dashboard
       navigate("/dashboard");
     } catch (error) {
-      alert("Invalid credentials");
+      console.error("Error en login:", error);
+      alert("Credenciales incorrectas");
     }
   };
 
   return (
     <div>
-      <h2>Login</h2>
+      <h2>Iniciar sesión</h2>
       <form onSubmit={handleLogin}>
         <input
           type="email"
-          placeholder="Email"
+          placeholder="Correo"
+          value={email}
           onChange={(e) => setEmail(e.target.value)}
         />
-        <br />
+
         <input
           type="password"
-          placeholder="Password"
+          placeholder="Contraseña"
+          value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        <br />
-        <button type="submit">Login</button>
+
+        <button type="submit">Entrar</button>
       </form>
     </div>
   );
 }
-
-export default Login;
