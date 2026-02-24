@@ -23,6 +23,8 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
         role_id=role.id
     )
 
+
+
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
