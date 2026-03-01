@@ -1,3 +1,6 @@
 venv
 doc.pdf
 mio
+
+# secretos locales
+backend/.env

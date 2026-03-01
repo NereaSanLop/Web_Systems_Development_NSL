@@ -93,6 +93,12 @@ venv\Scripts\activate
 # Instalar dependencias
 pip install -r requirements.txt
 
+# Configurar variables de entorno
+# Crear archivo backend/.env y añadir:
+# SECRET_KEY=tu_cadena_secreta_de_minimo_32_caracteres
+# Hay un archivo backend/.env.example que sirve de ejemplo
+
+
 # Iniciar servidor backend
 cd backend
 uvicorn app.main:app --reload

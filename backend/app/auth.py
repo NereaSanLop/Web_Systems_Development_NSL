@@ -1,8 +1,8 @@
 import jwt
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
+from .settings import SECRET_KEY
 
-SECRET_KEY = "supersecretkey"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
