@@ -1,23 +1,108 @@
 import { useEffect, useState } from "react";
-import api from "../services/api";
+import { useNavigate } from "react-router-dom";
+import UserController from "../controllers/userController";
+import AuthController from "../controllers/authController";
 
 function Dashboard() {
   const [user, setUser] = useState(null);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    api.get("/me")
-      .then((res) => setUser(res.data))
-      .catch(() => alert("Unauthorized"));
+    const fetchData = async () => {
+      try {
+        const userData = await UserController.getProfile();
+        setUser(userData);
+      } catch (err) {
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  if (!user) return <p>Loading...</p>;
+  const handleLogout = () => {
+    AuthController.logout();
+    navigate("/");
+  };
+
+  const goToAdmin = () => {
+    navigate("/admin");
+  };
+
+  if (error) {
+    return (
+      <div className="container mt-5">
+        <div className="alert alert-danger" role="alert">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
+  if (loading || !user) {
+    return (
+      <div className="container mt-5">
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Loading...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div>
-      <h2>Dashboard</h2>
-      <p>Name: {user.name}</p>
-      <p>Email: {user.email}</p>
-      <p>Role: {user.role}</p>
+    <div className="min-vh-100 bg-light">
+      <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div className="container-fluid">
+          <span className="navbar-brand mb-0 h1">Time Bank</span>
+          <div>
+            {user.role === "admin" && (
+              <button className="btn btn-outline-warning me-2" onClick={goToAdmin}>
+                Administrar
+              </button>
+            )}
+            <button className="btn btn-outline-light" onClick={handleLogout}>
+              Cerrar sesión
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      <div className="container mt-5">
+        <div className="row justify-content-center">
+          <div className="col-md-6">
+            <div className="card shadow-lg">
+              <div className="card-body">
+                <h2 className="card-title mb-4">Mi Perfil</h2>
+                
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Nombre:</label>
+                  <p className="form-control-plaintext">{user.name}</p>
+                </div>
+                
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Correo:</label>
+                  <p className="form-control-plaintext">{user.email}</p>
+                </div>
+                
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Rol:</label>
+                  <p>
+                    <span className={`badge bg-${user.role === "admin" ? "danger" : "success"}`}>
+                      {user.role}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
