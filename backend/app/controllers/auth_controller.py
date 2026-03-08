@@ -5,15 +5,13 @@ from ..auth import hash_password, verify_password, create_access_token
 
 class AuthController:
     @staticmethod
-    def signup(name: str, email: str, password: str, is_admin: bool, db: Session):
+    def signup(name: str, email: str, password: str, db: Session):
         """Lógica de negocio para registro"""
         existing_user = db.query(User).filter(User.email == email).first()
         if existing_user:
             raise HTTPException(status_code=400, detail="Email already registered")
 
-        # Cambiar según is_admin
-        role_name = "admin" if is_admin else "user"
-        role = db.query(Role).filter(Role.name == role_name).first()
+        role = db.query(Role).filter(Role.name == "user").first()
         
         new_user = User(
             name=name,

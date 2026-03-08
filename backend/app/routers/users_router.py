@@ -29,3 +29,14 @@ def delete_user(
 ):
     """Endpoint para borrar un usuario - solo admin"""
     return UserController.delete_user(user_id, db)
+
+@router.put("/users/{user_id}/role")
+def change_role(
+    user_id: int,
+    body: dict,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_admin_user)
+):
+    """Endpoint para cambiar el rol de un usuario - solo admin"""
+    new_role = body.get("role")
+    return UserController.change_role(user_id, new_role, db)

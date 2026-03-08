@@ -9,7 +9,7 @@ router = APIRouter()
 @router.post("/signup")
 def signup(user: UserCreate, db: Session = Depends(get_db)):
     """Endpoint de signup - solo llama al controller"""
-    return AuthController.signup(user.name, user.email, user.password, user.is_admin, db)
+    return AuthController.signup(user.name, user.email, user.password, db)
 
 @router.post("/login")
 def login(user: UserLogin, db: Session = Depends(get_db)):

@@ -8,23 +8,23 @@ function Home() {
       <div className="container">
         <div className="row justify-content-center">
           <div className="col-md-8 text-center">
-            <h1 className="display-4 fw-bold mb-4">Bienvenido a Time Bank</h1>
+            <h1 className="display-4 fw-bold mb-4">Welcome to Time Bank</h1>
             <p className="lead mb-5">
-              Gestiona tu tiempo de forma eficiente y colaborativa
+              Manage your time efficiently and collaboratively
             </p>
-            
+
             <div className="d-grid gap-3 d-sm-flex justify-content-sm-center">
-              <button 
+              <button
                 className="btn btn-primary btn-lg px-4 gap-3"
                 onClick={() => navigate("/login")}
               >
-                Iniciar sesión
+                Log in
               </button>
-              <button 
+              <button
                 className="btn btn-outline-secondary btn-lg px-4"
                 onClick={() => navigate("/signup")}
               >
-                Crear cuenta
+                Sign up
               </button>
             </div>
           </div>

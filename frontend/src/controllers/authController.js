@@ -1,13 +1,12 @@
 import api from "../services/api";
 
 class AuthController {
-  static async signup(name, email, password, isAdmin = false) {
+  static async signup(name, email, password) {
     try {
       const response = await api.post("/signup", {
         name,
         email,
         password,
-        is_admin: isAdmin,
       });
       return response.data;
     } catch (error) {

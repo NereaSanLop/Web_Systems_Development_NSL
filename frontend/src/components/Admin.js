@@ -35,16 +35,31 @@ function Admin() {
 
   const handleDeleteUser = async (userId, userName) => {
     const confirmed = window.confirm(
-      `¿Estás seguro de que quieres borrar al usuario "${userName}"?\n\nEsta acción no se puede deshacer.`
+      `Are you sure you want to delete user "${userName}"?\n\nThis action cannot be undone.`
     );
 
     if (confirmed) {
       try {
         await UserController.deleteUser(userId);
-        // Actualizar la lista de usuarios después de borrar
         const updatedUsers = users.filter((u) => u.id !== userId);
         setUsers(updatedUsers);
-        alert("Usuario borrado exitosamente");
+        alert("User deleted successfully");
+      } catch (err) {
+        alert(`Error: ${err}`);
+      }
+    }
+  };
+
+  const handleChangeRole = async (userId, currentRole) => {
+    const newRole = currentRole === "admin" ? "user" : "admin";
+    const confirmed = window.confirm(
+      `Change this user's role to "${newRole}"?`
+    );
+
+    if (confirmed) {
+      try {
+        await UserController.changeUserRole(userId, newRole);
+        setUsers(users.map((u) => u.id === userId ? { ...u, role: newRole } : u));
       } catch (err) {
         alert(`Error: ${err}`);
       }
@@ -61,14 +76,14 @@ function Admin() {
               Dashboard
             </button>
             <button className="btn btn-outline-light" onClick={handleLogout}>
-              Cerrar sesión
+              Log out
             </button>
           </div>
         </div>
       </nav>
 
       <div className="container mt-5">
-        <h2 className="mb-4">Gestión de Usuarios</h2>
+        <h2 className="mb-4">User Management</h2>
 
         {error && (
           <div className="alert alert-danger" role="alert">
@@ -84,7 +99,7 @@ function Admin() {
           </div>
         ) : users.length === 0 ? (
           <div className="alert alert-info" role="alert">
-            No hay usuarios registrados
+            No registered users
           </div>
         ) : (
           <div className="card shadow-lg">
@@ -94,10 +109,10 @@ function Admin() {
                   <thead className="table-dark">
                     <tr>
                       <th>ID</th>
-                      <th>Nombre</th>
-                      <th>Correo</th>
-                      <th>Rol</th>
-                      <th>Acciones</th>
+                      <th>Name</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -113,10 +128,16 @@ function Admin() {
                         </td>
                         <td>
                           <button
+                            className="btn btn-warning btn-sm me-2"
+                            onClick={() => handleChangeRole(user.id, user.role)}
+                          >
+                            Cambiar rol
+                          </button>
+                          <button
                             className="btn btn-danger btn-sm"
                             onClick={() => handleDeleteUser(user.id, user.name)}
                           >
-                            🗑️ Borrar
+                            Borrar
                           </button>
                         </td>
                       </tr>

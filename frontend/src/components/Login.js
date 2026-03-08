@@ -30,7 +30,7 @@ export default function Login() {
         <div className="col-md-6">
           <div className="card shadow-lg">
             <div className="card-body">
-              <h2 className="card-title text-center mb-4">Iniciar sesión</h2>
+              <h2 className="card-title text-center mb-4">Log in</h2>
               
               {error && (
                 <div className="alert alert-danger" role="alert">
@@ -40,7 +40,7 @@ export default function Login() {
               
               <form onSubmit={handleLogin}>
                 <div className="mb-3">
-                  <label htmlFor="email" className="form-label">Correo</label>
+                  <label htmlFor="email" className="form-label">Email</label>
                   <input
                     type="email"
                     id="email"
@@ -53,12 +53,12 @@ export default function Login() {
                 </div>
                 
                 <div className="mb-3">
-                  <label htmlFor="password" className="form-label">Contraseña</label>
+                  <label htmlFor="password" className="form-label">Password</label>
                   <input
                     type="password"
                     id="password"
                     className="form-control"
-                    placeholder="Contraseña"
+                    placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -73,16 +73,16 @@ export default function Login() {
                   {loading ? (
                     <>
                       <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Entrando...
+                      Logging in...
                     </>
                   ) : (
-                    "Entrar"
+                    "Log in"
                   )}
                 </button>
               </form>
               
               <p className="text-center mt-3">
-                ¿No tienes cuenta? <a href="/signup">Regístrate aquí</a>
+                Don't have an account? <a href="/signup">Sign up here</a>
               </p>
             </div>
           </div>

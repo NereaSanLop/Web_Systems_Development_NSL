@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from .database import engine, Base, SessionLocal
-from .models import Role
+from .models import Role, User
+from .auth import hash_password
 from .routers import auth_router, users_router
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -26,4 +27,16 @@ def create_roles():
         if not db.query(Role).filter(Role.name == role_name).first():
             db.add(Role(name=role_name))
     db.commit()
+
+    admin_role = db.query(Role).filter(Role.name == "admin").first()
+    if not db.query(User).filter(User.email == "admin@admin.com").first():
+        admin_user = User(
+            name="Admin",
+            email="admin@admin.com",
+            hashed_password=hash_password("admin"),
+            role_id=admin_role.id,
+        )
+        db.add(admin_user)
+        db.commit()
+
     db.close()

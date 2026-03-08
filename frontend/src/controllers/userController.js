@@ -27,6 +27,15 @@ class UserController {
       throw error.response?.data?.detail || "Error deleting user";
     }
   }
+
+  static async changeUserRole(userId, newRole) {
+    try {
+      const response = await api.put(`/users/${userId}/role`, { role: newRole });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Error changing role";
+    }
+  }
 }
 
 export default UserController;

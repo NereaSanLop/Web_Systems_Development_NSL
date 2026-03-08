@@ -63,11 +63,11 @@ function Dashboard() {
           <div>
             {user.role === "admin" && (
               <button className="btn btn-outline-warning me-2" onClick={goToAdmin}>
-                Administrar
+                Admin panel
               </button>
             )}
             <button className="btn btn-outline-light" onClick={handleLogout}>
-              Cerrar sesión
+              Log out
             </button>
           </div>
         </div>
@@ -78,20 +78,20 @@ function Dashboard() {
           <div className="col-md-6">
             <div className="card shadow-lg">
               <div className="card-body">
-                <h2 className="card-title mb-4">Mi Perfil</h2>
-                
+                <h2 className="card-title mb-4">My Profile</h2>
+
                 <div className="mb-3">
-                  <label className="form-label fw-bold">Nombre:</label>
+                  <label className="form-label fw-bold">Name:</label>
                   <p className="form-control-plaintext">{user.name}</p>
                 </div>
                 
                 <div className="mb-3">
-                  <label className="form-label fw-bold">Correo:</label>
+                  <label className="form-label fw-bold">Email:</label>
                   <p className="form-control-plaintext">{user.email}</p>
                 </div>
                 
                 <div className="mb-3">
-                  <label className="form-label fw-bold">Rol:</label>
+                  <label className="form-label fw-bold">Role:</label>
                   <p>
                     <span className={`badge bg-${user.role === "admin" ? "danger" : "success"}`}>
                       {user.role}

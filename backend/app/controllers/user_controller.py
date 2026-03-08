@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from ..models import User
+from ..models import User, Role
 
 class UserController:
     @staticmethod
@@ -38,3 +38,20 @@ class UserController:
         db.commit()
         
         return {"message": "User deleted successfully"}
+
+    @staticmethod
+    def change_role(user_id: int, new_role: str, db: Session):
+        """Lógica para cambiar el rol de un usuario (solo admin)"""
+        if new_role not in ("admin", "user"):
+            raise HTTPException(status_code=400, detail="Invalid role. Must be 'admin' or 'user'")
+
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        role = db.query(Role).filter(Role.name == new_role).first()
+        user.role_id = role.id
+        db.commit()
+        db.refresh(user)
+
+        return {"message": f"Role updated to '{new_role}' successfully"}
