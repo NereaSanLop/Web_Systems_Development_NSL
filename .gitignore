@@ -4,3 +4,5 @@ mio
 
 # secretos locales
 backend/.env
+
+DOCUMENTATION.md
