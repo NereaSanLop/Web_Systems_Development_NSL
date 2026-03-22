@@ -130,7 +130,6 @@ The frontend will be available at: `http://localhost:3000`
   - Name
   - Email
   - Password
-  - (Optional) Check the "Sign up as Administrator" checkbox
 - Click "Sign Up"
 
 ### 2. Log In
@@ -148,6 +147,7 @@ The frontend will be available at: `http://localhost:3000`
 
 - From the Dashboard, click "Manage"
 - View full user list
+- Change roles
 - Delete users (with confirmation)
 - Return to the Dashboard
 
