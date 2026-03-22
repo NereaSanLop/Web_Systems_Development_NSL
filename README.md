@@ -1,157 +1,156 @@
-# Time Bank - Sistema de Gestión de Usuarios
+# Time Bank - User Management System
 
-Un sistema web full-stack de gestión de usuarios con autenticación JWT, roles de usuario (admin/user) y arquitectura MVC.
+A full-stack web user management system with JWT authentication, user roles (admin/user), and MVC architecture.
 
-## Tabla de Contenidos
+## Table of Contents
 
-- [Características](#características)
-- [Tecnologías](#tecnologías)
-- [Arquitectura](#arquitectura)
-- [Instalación](#instalación)
-- [Uso](#uso)
-- [Estructura del Proyecto](#estructura-del-proyecto)
+- [Features](#features)
+- [Technologies](#technologies)
+- [Architecture](#architecture)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Project Structure](#project-structure)
 - [API Endpoints](#api-endpoints)
-- [Capturas de Pantalla](#capturas-de-pantalla)
+- [Screenshots](#screenshots)
 
-## Características
+## Features
 
-### Autenticación y Autorización
-- Registro de usuarios con opción de rol admin
-- Login con JWT (JSON Web Tokens)
-- Protección de rutas según autenticación
-- Control de acceso basado en roles (RBAC)
+### Authentication and Authorization
+- User registration with optional admin role
+- JWT login (JSON Web Tokens)
+- Route protection based on authentication
+- Role-based access control (RBAC)
 
-### Gestión de Usuarios
-- Dashboard personalizado para cada usuario
-- Panel de administración para usuarios admin
-- CRUD completo de usuarios (solo admin)
-- Visualización de perfiles con nombre, email y rol
+### User Management
+- Personalized dashboard for each user
+- Administration panel for admin users
+- Full user CRUD (admin only)
+- Profile view with name, email, and role
 
-### Interfaz de Usuario
-- Diseño responsivo con Bootstrap 5
-- Navegación intuitiva entre vistas
-- Alertas y confirmaciones para acciones críticas
-- Estados de carga (spinners)
+### User Interface
+- Responsive design with Bootstrap 5
+- Intuitive navigation between views
+- Alerts and confirmations for critical actions
+- Loading states (spinners)
 
-## Tecnologías
+## Technologies
 
 ### Backend
-- **FastAPI** - Framework web moderno y rápido
-- **SQLAlchemy** - ORM para manejo de base de datos
-- **SQLite** - Base de datos ligera
-- **PyJWT** - Generación y validación de tokens
-- **Passlib & Bcrypt** - Hash seguro de contraseñas
-- **Pydantic** - Validación de datos
+- **FastAPI** - Modern and fast web framework
+- **SQLAlchemy** - ORM for database management
+- **SQLite** - Lightweight database
+- **PyJWT** - Token generation and validation
+- **Passlib & Bcrypt** - Secure password hashing
+- **Pydantic** - Data validation
 
 ### Frontend
-- **React 19** - Biblioteca de interfaz de usuario
-- **React Router DOM** - Enrutamiento SPA
-- **Axios** - Cliente HTTP
-- **Bootstrap 5** - Framework CSS responsivo
+- **React 19** - User interface library
+- **React Router DOM** - SPA routing
+- **Axios** - HTTP client
+- **Bootstrap 5** - Responsive CSS framework
 
-## Arquitectura
+## Architecture
 
-El proyecto sigue el patrón **MVC (Model-View-Controller)**:
+The project follows the **MVC (Model-View-Controller)** pattern:
 
 ### Backend (FastAPI)
 ```
-├── Models (models.py)          → Definición de entidades (User, Role)
-├── Views (routers/)            → Endpoints HTTP
-└── Controllers (controllers/)  → Lógica de negocio
+├── Models (models.py)          -> Entity definitions (User, Role)
+├── Views (routers/)            -> HTTP endpoints
+└── Controllers (controllers/)  -> Business logic
 ```
 
 ### Frontend (React)
 ```
-├── Models (localStorage)       → Gestión de token
-├── Views (components/)         → Componentes React
-└── Controllers (controllers/)  → Lógica de negocio y llamadas API
+├── Models (localStorage)       -> Token management
+├── Views (components/)         -> React components
+└── Controllers (controllers/)  -> Business logic and API calls
 ```
 
-## Instalación
+## Installation
 
-### Prerrequisitos
+### Prerequisites
 - Python 3.9+
 - Node.js 16+
-- npm o yarn
+- npm or yarn
 
 ### Backend
 
 ```bash
-# Clonar el repositorio
-git clone <repository-url>
+# Clone the repository
+git clone https://github.com/NereaSanLop/Web_Systems_Development_NSL.git
 cd Web_Systems_Development_NSL
 
-# Crear entorno virtual
+# Create a virtual environment
 python -m venv venv
 
-# Activar entorno virtual
-# En macOS/Linux:
+# Activate the virtual environment
+# On macOS/Linux:
 source venv/bin/activate
-# En Windows:
+# On Windows:
 venv\Scripts\activate
 
-# Instalar dependencias
+# Install dependencies
 pip install -r requirements.txt
 
-# Configurar variables de entorno
-# Crear archivo backend/.env y añadir:
-# SECRET_KEY=tu_cadena_secreta_de_minimo_32_caracteres
-# Hay un archivo backend/.env.example que sirve de ejemplo
+# Configure environment variables
+# Create backend/.env and add:
+# SECRET_KEY=your_secret_string_with_minimum_32_characters
+# There is a backend/.env.example file you can use as reference
 
-
-# Iniciar servidor backend
+# Start the backend server
 cd backend
 uvicorn app.main:app --reload
 ```
 
-El backend estará disponible en: `http://127.0.0.1:8000`
+The backend will be available at: `http://127.0.0.1:8000`
 
 ### Frontend
 
 ```bash
-# En otra terminal, ir a la carpeta frontend
+# In another terminal, go to the frontend folder
 cd frontend
 
-# Instalar dependencias
+# Install dependencies
 npm install
 
-# Iniciar servidor de desarrollo
+# Start the development server
 npm start
 ```
 
-El frontend estará disponible en: `http://localhost:3000`
+The frontend will be available at: `http://localhost:3000`
 
-## Uso
+## Usage
 
-### 1. Registro de Usuario
+### 1. User Registration
 
-- Navega a `http://localhost:3000/signup`
-- Completa el formulario con:
-  - Nombre
+- Go to `http://localhost:3000/signup`
+- Fill out the form with:
+  - Name
   - Email
-  - Contraseña
-  - (Opcional) Marca el checkbox "Registrarse como Administrador"
-- Haz clic en "Registrarse"
+  - Password
+  - (Optional) Check the "Sign up as Administrator" checkbox
+- Click "Sign Up"
 
-### 2. Iniciar Sesión
+### 2. Log In
 
-- Navega a `http://localhost:3000/login`
-- Ingresa tu email y contraseña
-- Serás redirigido al Dashboard
+- Go to `http://localhost:3000/login`
+- Enter your email and password
+- You will be redirected to the Dashboard
 
-### 3. Dashboard (Usuario Normal)
+### 3. Dashboard (Regular User)
 
-- Ver tu perfil (nombre, email, rol)
-- Cerrar sesión
+- View your profile (name, email, role)
+- Log out
 
-### 4. Panel de Administración (Solo Admin)
+### 4. Administration Panel (Admin Only)
 
-- Desde el Dashboard, haz clic en "Administrar"
-- Ver lista completa de usuarios
-- Borrar usuarios (con confirmación)
-- Volver al Dashboard
+- From the Dashboard, click "Manage"
+- View full user list
+- Delete users (with confirmation)
+- Return to the Dashboard
 
-## Estructura del Proyecto
+## Project Structure
 
 ```
 Web_Systems_Development_NSL/
@@ -159,38 +158,38 @@ Web_Systems_Development_NSL/
 │   ├── app/
 │   │   ├── controllers/
 │   │   │   ├── __init__.py
-│   │   │   ├── auth_controller.py      # Lógica de autenticación
-│   │   │   └── user_controller.py      # Lógica de usuarios
+│   │   │   ├── auth_controller.py      # Authentication logic
+│   │   │   └── user_controller.py      # User logic
 │   │   ├── routers/
-│   │   │   ├── auth_router.py          # Endpoints de auth
-│   │   │   └── users_router.py         # Endpoints de usuarios
-│   │   ├── auth.py                     # JWT y hash de passwords
-│   │   ├── database.py                 # Configuración de DB
-│   │   ├── dependencies.py             # Dependencias de FastAPI
-│   │   ├── main.py                     # Punto de entrada
-│   │   ├── models.py                   # Modelos SQLAlchemy
-│   │   └── schemas.py                  # Schemas Pydantic
+│   │   │   ├── auth_router.py          # Auth endpoints
+│   │   │   └── users_router.py         # User endpoints
+│   │   ├── auth.py                     # JWT and password hashing
+│   │   ├── database.py                 # DB configuration
+│   │   ├── dependencies.py             # FastAPI dependencies
+│   │   ├── main.py                     # Entry point
+│   │   ├── models.py                   # SQLAlchemy models
+│   │   └── schemas.py                  # Pydantic schemas
 │   ├── requirements.txt
-│   └── timebank.db                     # Base de datos SQLite
+│   └── timebank.db                     # SQLite database
 │
 ├── frontend/
 │   ├── public/
 │   │   └── index.html
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── Admin.js                # Panel de administración
-│   │   │   ├── Dashboard.js            # Dashboard de usuario
-│   │   │   ├── Home.js                 # Página de inicio
-│   │   │   ├── Login.js                # Formulario de login
-│   │   │   ├── Signup.js               # Formulario de registro
-│   │   │   └── ProtectedRoute.jsx      # HOC para rutas protegidas
+│   │   │   ├── Admin.js                # Administration panel
+│   │   │   ├── Dashboard.js            # User dashboard
+│   │   │   ├── Home.js                 # Home page
+│   │   │   ├── Login.js                # Login form
+│   │   │   ├── Signup.js               # Registration form
+│   │   │   └── ProtectedRoute.jsx      # HOC for protected routes
 │   │   ├── controllers/
-│   │   │   ├── authController.js       # Lógica de autenticación
-│   │   │   └── userController.js       # Lógica de usuarios
+│   │   │   ├── authController.js       # Authentication logic
+│   │   │   └── userController.js       # User logic
 │   │   ├── services/
-│   │   │   └── api.js                  # Configuración de Axios
-│   │   ├── App.js                      # Componente principal
-│   │   └── index.js                    # Punto de entrada
+│   │   │   └── api.js                  # Axios configuration
+│   │   ├── App.js                      # Main component
+│   │   └── index.js                    # Entry point
 │   ├── package.json
 │   └── README.md
 │
@@ -201,17 +200,17 @@ Web_Systems_Development_NSL/
 
 ## API Endpoints
 
-### Autenticación
+### Authentication
 
-| Método | Endpoint | Descripción | Auth |
+| Method | Endpoint | Description | Auth |
 |--------|----------|-------------|------|
-| POST | `/signup` | Registrar nuevo usuario | No |
-| POST | `/login` | Iniciar sesión | No |
+| POST | `/signup` | Register a new user | No |
+| POST | `/login` | Log in | No |
 
 **Request Body - Signup:**
 ```json
 {
-  "name": "Juan Pérez",
+  "name": "Juan Perez",
   "email": "juan@example.com",
   "password": "mypassword123",
   "is_admin": false
@@ -233,19 +232,19 @@ Web_Systems_Development_NSL/
 }
 ```
 
-### Usuarios
+### Users
 
-| Método | Endpoint | Descripción | Auth | Rol |
-|--------|----------|-------------|------|-----|
-| GET | `/me` | Obtener perfil del usuario actual | Sí | user/admin |
-| GET | `/users` | Listar todos los usuarios | Sí | admin |
-| DELETE | `/users/{user_id}` | Borrar un usuario | Sí | admin |
+| Method | Endpoint | Description | Auth | Role |
+|--------|----------|-------------|------|------|
+| GET | `/me` | Get current user profile | Yes | user/admin |
+| GET | `/users` | List all users | Yes | admin |
+| DELETE | `/users/{user_id}` | Delete a user | Yes | admin |
 
 **Response - GET /me:**
 ```json
 {
   "id": 1,
-  "name": "Juan Pérez",
+  "name": "Juan Perez",
   "email": "juan@example.com",
   "role": "user"
 }
@@ -262,56 +261,36 @@ Web_Systems_Development_NSL/
   },
   {
     "id": 2,
-    "name": "Juan Pérez",
+    "name": "Juan Perez",
     "email": "juan@example.com",
     "role": "user"
   }
 ]
 ```
 
-### Headers Requeridos para Endpoints Protegidos
+### Required Headers for Protected Endpoints
 
 ```
-Authorization: Bearer <token_jwt>
+Authorization: Bearer <jwt_token>
 ```
 
-## Capturas de Pantalla
+## Security
 
-### Página de Inicio
-Pantalla de bienvenida con opciones de Login y Registro.
-
-### Login
-Formulario de inicio de sesión con validación de credenciales.
-
-### Registro
-Formulario de registro con opción de crear cuenta como administrador.
-
-### Dashboard (Usuario)
-Vista del perfil personal con información del usuario.
-
-### Dashboard (Admin)
-Vista del perfil con botón adicional "Administrar" para acceder al panel de administración.
-
-### Panel de Administración
-Tabla con lista completa de usuarios y opción de borrar.
-
-## Seguridad
-
-- Contraseñas hasheadas con bcrypt
-- Tokens JWT con expiración (60 minutos)
-- Validación de tokens en cada petición protegida
-- CORS configurado para desarrollo
-- Protección de rutas frontend y backend
-- Confirmación antes de acciones destructivas
+- Passwords hashed with bcrypt
+- JWT tokens with expiration (60 minutes)
+- Token validation on every protected request
+- CORS configured for development
+- Protected routes in both frontend and backend
+- Confirmation before destructive actions
 
 ## Testing
 
-### Documentación Interactiva de la API
+### Interactive API Documentation
 
-FastAPI genera automáticamente documentación interactiva:
+FastAPI automatically generates interactive documentation:
 
 ```
 http://127.0.0.1:8000/docs
 ```
 
-Aquí puedes probar todos los endpoints directamente desde el navegador.
+You can test all endpoints directly from the browser.
