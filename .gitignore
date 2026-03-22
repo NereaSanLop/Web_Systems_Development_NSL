@@ -1,6 +1,10 @@
 venv
 doc.pdf
 mio
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
 
 # secretos locales
 backend/.env
