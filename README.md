@@ -88,6 +88,7 @@ python -m venv venv
 # On macOS/Linux:
 source venv/bin/activate
 # On Windows:
+[Set-ExecutionPolicy RemoteSigned -Scope CurrentUser]
 venv\Scripts\activate
 
 # Install dependencies
