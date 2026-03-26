@@ -1,16 +1,19 @@
 SHELL := /bin/bash
 
-PYTHON ?= python3
+VENV_DIR ?= venv
+PYTHON ?= $(if $(wildcard $(VENV_DIR)/bin/python),$(VENV_DIR)/bin/python,python3)
 PIP ?= $(PYTHON) -m pip
 UVICORN ?= $(PYTHON) -m uvicorn
 BACKEND_DIR := backend
 FRONTEND_DIR := frontend
 
-.PHONY: help install install-back install-front back front stop dev
+.PHONY: help install ensure-venv install-back install-front back front stop dev
 
 help:
 	@echo "Available targets:"
+	@echo "  (Uses $(VENV_DIR) automatically when present)"
 	@echo "  make install      -> Install backend and frontend dependencies"
+	@echo "                       (creates $(VENV_DIR) if missing)"
 	@echo "  make install-back -> Install backend dependencies"
 	@echo "  make install-front-> Install frontend dependencies"
 	@echo "  make back         -> Run backend only (http://127.0.0.1:8000)"
@@ -20,7 +23,13 @@ help:
 
 install: install-back install-front
 
-install-back:
+ensure-venv:
+	@if [ ! -x "$(VENV_DIR)/bin/python" ]; then \
+		echo "Creating virtual environment in $(VENV_DIR)..."; \
+		python3 -m venv "$(VENV_DIR)"; \
+	fi
+
+install-back: ensure-venv
 	$(PIP) install -r requirements.txt
 
 install-front:
