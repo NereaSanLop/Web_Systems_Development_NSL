@@ -1,7 +1,7 @@
 SHELL := /bin/bash
 
 VENV_DIR ?= venv
-PYTHON ?= $(if $(wildcard $(VENV_DIR)/bin/python),$(VENV_DIR)/bin/python,python3)
+PYTHON ?= $(if $(wildcard $(VENV_DIR)/bin/python),$(abspath $(VENV_DIR)/bin/python),python3)
 PIP ?= $(PYTHON) -m pip
 UVICORN ?= $(PYTHON) -m uvicorn
 BACKEND_DIR := backend
