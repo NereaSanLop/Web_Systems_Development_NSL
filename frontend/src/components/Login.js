@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AuthController from "../controllers/authController";
 
 export default function Login() {
+  // Render the login form and handle authentication state.
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -10,6 +11,7 @@ export default function Login() {
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
+    // Submit credentials and redirect to the dashboard on success.
     e.preventDefault();
     setError("");
     setLoading(true);

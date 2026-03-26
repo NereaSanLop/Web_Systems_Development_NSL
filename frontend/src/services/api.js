@@ -5,6 +5,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+  // Attach the bearer token to outgoing requests when available.
   const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

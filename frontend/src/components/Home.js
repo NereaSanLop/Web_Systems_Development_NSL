@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 
 function Home() {
+  // Render the public landing page with auth navigation.
   const navigate = useNavigate();
 
   return (

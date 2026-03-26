@@ -11,7 +11,6 @@ A full-stack web user management system with JWT authentication, user roles (adm
 - [Usage](#usage)
 - [Project Structure](#project-structure)
 - [API Endpoints](#api-endpoints)
-- [Screenshots](#screenshots)
 
 ## Features
 

@@ -4,6 +4,7 @@ import UserController from "../controllers/userController";
 import AuthController from "../controllers/authController";
 
 function Dashboard() {
+  // Show authenticated user data and dashboard actions.
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -11,6 +12,7 @@ function Dashboard() {
 
   useEffect(() => {
     const fetchData = async () => {
+      // Load the current user's profile information.
       try {
         const userData = await UserController.getProfile();
         setUser(userData);
@@ -25,11 +27,13 @@ function Dashboard() {
   }, []);
 
   const handleLogout = () => {
+    // Clear session data and return to the home page.
     AuthController.logout();
     navigate("/");
   };
 
   const goToAdmin = () => {
+    // Navigate admins to the admin panel.
     navigate("/admin");
   };
 

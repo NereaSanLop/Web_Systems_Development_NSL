@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import AuthController from "../controllers/authController";
 
 function Signup() {
+  // Render the signup form and create new user accounts.
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -11,6 +12,7 @@ function Signup() {
   const navigate = useNavigate();
 
   const handleSignup = async (e) => {
+    // Submit registration data and navigate to login on success.
     e.preventDefault();
     setError("");
     setLoading(true);

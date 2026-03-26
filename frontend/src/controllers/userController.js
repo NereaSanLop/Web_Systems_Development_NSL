@@ -2,6 +2,7 @@ import api from "../services/api";
 
 class UserController {
   static async getProfile() {
+    // Retrieve the authenticated user's profile.
     try {
       const response = await api.get("/me");
       return response.data;
@@ -11,6 +12,7 @@ class UserController {
   }
 
   static async getAllUsers() {
+    // Retrieve all users for admin views.
     try {
       const response = await api.get("/users");
       return response.data;
@@ -20,6 +22,7 @@ class UserController {
   }
 
   static async deleteUser(userId) {
+    // Delete a user by its identifier.
     try {
       const response = await api.delete(`/users/${userId}`);
       return response.data;
@@ -29,6 +32,7 @@ class UserController {
   }
 
   static async changeUserRole(userId, newRole) {
+    // Update a user's role to the selected value.
     try {
       const response = await api.put(`/users/${userId}/role`, { role: newRole });
       return response.data;

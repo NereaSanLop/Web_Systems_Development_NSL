@@ -7,6 +7,7 @@ import Home from "./components/Home";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
+  // Define application routes and protected sections.
   return (
     <Router>
       <Routes>

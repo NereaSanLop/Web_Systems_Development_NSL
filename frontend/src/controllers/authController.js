@@ -2,6 +2,7 @@ import api from "../services/api";
 
 class AuthController {
   static async signup(name, email, password) {
+    // Create a new user account.
     try {
       const response = await api.post("/signup", {
         name,
@@ -15,6 +16,7 @@ class AuthController {
   }
 
   static async login(email, password) {
+    // Authenticate user credentials and store the token.
     try {
       const response = await api.post("/login", {
         email,
@@ -29,14 +31,17 @@ class AuthController {
   }
 
   static logout() {
+    // Remove the stored authentication token.
     localStorage.removeItem("token");
   }
 
   static getToken() {
+    // Return the current authentication token.
     return localStorage.getItem("token");
   }
 
   static isAuthenticated() {
+    // Check whether a valid token exists in storage.
     return !!this.getToken();
   }
 }

@@ -4,6 +4,7 @@ import UserController from "../controllers/userController";
 import AuthController from "../controllers/authController";
 
 function Admin() {
+  // Render the admin interface for user management tasks.
   const [users, setUsers] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -14,6 +15,7 @@ function Admin() {
   }, []);
 
   const fetchUsers = async () => {
+    // Fetch all users for admin listing.
     try {
       const userData = await UserController.getAllUsers();
       setUsers(userData);
@@ -25,15 +27,18 @@ function Admin() {
   };
 
   const handleLogout = () => {
+    // Log out and return to the public home page.
     AuthController.logout();
     navigate("/");
   };
 
   const goToDashboard = () => {
+    // Navigate back to the user dashboard.
     navigate("/dashboard");
   };
 
   const handleDeleteUser = async (userId, userName) => {
+    // Confirm and delete a selected user account.
     const confirmed = window.confirm(
       `Are you sure you want to delete user "${userName}"?\n\nThis action cannot be undone.`
     );
@@ -51,6 +56,7 @@ function Admin() {
   };
 
   const handleChangeRole = async (userId, currentRole) => {
+    // Toggle a user's role between admin and user.
     const newRole = currentRole === "admin" ? "user" : "admin";
     const confirmed = window.confirm(
       `Change this user's role to "${newRole}"?`
