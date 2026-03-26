@@ -3,7 +3,7 @@ from pathlib import Path
 
 
 def _load_dotenv() -> None:
-    """Carga backend/.env sin dependencias externas."""
+    """Load backend/.env variables without external dependencies."""
     env_path = Path(__file__).resolve().parents[1] / ".env"
     if not env_path.exists():
         return

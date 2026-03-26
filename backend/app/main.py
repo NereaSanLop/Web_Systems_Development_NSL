@@ -22,6 +22,7 @@ app.include_router(users_router.router)
 
 @app.on_event("startup")
 def create_roles():
+    # Seed default roles and create the initial admin account.
     db = SessionLocal()
     for role_name in ["admin", "user"]:
         if not db.query(Role).filter(Role.name == role_name).first():

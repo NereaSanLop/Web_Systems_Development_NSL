@@ -5,7 +5,7 @@ from ..models import User, Role
 class UserController:
     @staticmethod
     def get_profile(current_user: User):
-        """Lógica para obtener perfil del usuario"""
+        """Return profile data for the authenticated user."""
         return {
             "id": current_user.id,
             "name": current_user.name,
@@ -15,7 +15,7 @@ class UserController:
 
     @staticmethod
     def get_all_users(db: Session):
-        """Lógica para obtener todos los usuarios (solo admin)"""
+        """List all users for admin-only access."""
         users = db.query(User).all()
         return [
             {
@@ -28,7 +28,7 @@ class UserController:
 
     @staticmethod
     def delete_user(user_id: int, db: Session):
-        """Lógica para borrar un usuario (solo admin)"""
+        """Delete a user by ID for admin-only access."""
         user = db.query(User).filter(User.id == user_id).first()
         
         if not user:
@@ -41,7 +41,7 @@ class UserController:
 
     @staticmethod
     def change_role(user_id: int, new_role: str, db: Session):
-        """Lógica para cambiar el rol de un usuario (solo admin)"""
+        """Update a user's role to admin or user."""
         if new_role not in ("admin", "user"):
             raise HTTPException(status_code=400, detail="Invalid role. Must be 'admin' or 'user'")
 

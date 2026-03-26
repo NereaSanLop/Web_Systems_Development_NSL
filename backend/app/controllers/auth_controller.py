@@ -6,7 +6,7 @@ from ..auth import hash_password, verify_password, create_access_token
 class AuthController:
     @staticmethod
     def signup(name: str, email: str, password: str, db: Session):
-        """Lógica de negocio para registro"""
+        """Register a new user with the default role."""
         existing_user = db.query(User).filter(User.email == email).first()
         if existing_user:
             raise HTTPException(status_code=400, detail="Email already registered")
@@ -28,7 +28,7 @@ class AuthController:
 
     @staticmethod
     def login(email: str, password: str, db: Session):
-        """Lógica de negocio para login"""
+        """Authenticate a user and return an access token."""
         db_user = db.query(User).filter(User.email == email).first()
         
         if not db_user or not verify_password(password, db_user.hashed_password):
