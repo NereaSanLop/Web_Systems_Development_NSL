@@ -8,6 +8,7 @@ A full-stack web user management system with JWT authentication, user roles (adm
 - [Technologies](#technologies)
 - [Architecture](#architecture)
 - [Installation](#installation)
+- [Run with Makefile](#run-with-makefile)
 - [Usage](#usage)
 - [Project Structure](#project-structure)
 - [API Endpoints](#api-endpoints)
@@ -119,6 +120,31 @@ npm start
 ```
 
 The frontend will be available at: `http://localhost:3000`
+
+## Run with Makefile
+
+Use these commands from the project root:
+
+```bash
+# Install all dependencies
+make install
+
+# Run backend and frontend together
+make dev
+```
+
+Useful individual targets:
+
+```bash
+# Run backend only
+make back
+
+# Run frontend only
+make front
+
+# Stop processes using ports 8000 and 3000
+make stop
+```
 
 ## Usage
 
