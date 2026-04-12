@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from ..database import get_db
 from ..dependencies import get_current_user
@@ -7,6 +7,27 @@ from ..schemas import ServiceCreate, ServiceUpdate, ServiceResponse
 from ..controllers.service_controller import ServiceController
 
 router = APIRouter()
+
+
+@router.get("/services/browse", response_model=list[ServiceResponse])
+def browse_services(
+    q: str | None = Query(default=None, max_length=120),
+    min_cost: int | None = Query(default=None, ge=1),
+    max_cost: int | None = Query(default=None, ge=1),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Browse services offered by other users with simple filters."""
+    if min_cost is not None and max_cost is not None and min_cost > max_cost:
+        raise HTTPException(status_code=400, detail="min_cost cannot be greater than max_cost")
+
+    return ServiceController.browse_services(
+        current_user=current_user,
+        db=db,
+        query=q,
+        min_cost=min_cost,
+        max_cost=max_cost,
+    )
 
 
 @router.get("/services", response_model=list[ServiceResponse])

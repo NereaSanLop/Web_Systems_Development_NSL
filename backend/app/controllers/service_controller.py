@@ -15,6 +15,28 @@ class ServiceController:
         )
 
     @staticmethod
+    def browse_services(
+        current_user: User,
+        db: Session,
+        query: str | None = None,
+        min_cost: int | None = None,
+        max_cost: int | None = None,
+    ):
+        """Return services from other users with optional simple filters."""
+        services_query = db.query(Service).filter(Service.owner_email != current_user.email)
+
+        if query:
+            services_query = services_query.filter(Service.title.ilike(f"%{query.strip()}%"))
+
+        if min_cost is not None:
+            services_query = services_query.filter(Service.cost >= min_cost)
+
+        if max_cost is not None:
+            services_query = services_query.filter(Service.cost <= max_cost)
+
+        return services_query.order_by(Service.id.desc()).all()
+
+    @staticmethod
     def create_service(title: str, cost: int, current_user: User, db: Session):
         """Create a new service linked to the authenticated user email."""
         service = Service(

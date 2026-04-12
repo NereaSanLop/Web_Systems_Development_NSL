@@ -46,6 +46,11 @@ function Dashboard() {
     navigate("/admin");
   };
 
+  const goToServices = () => {
+    // Navigate users to the browse-services page.
+    navigate("/browse-services");
+  };
+
   const resetServiceForm = () => {
     setServiceForm({ title: "", cost: "" });
     setEditingServiceId(null);
@@ -137,6 +142,9 @@ function Dashboard() {
         <div className="container-fluid">
           <span className="navbar-brand mb-0 h1">Time Bank</span>
           <div>
+            <button className="btn btn-outline-info me-2" onClick={goToServices}>
+              Browse services
+            </button>
             {user.role === "admin" && (
               <button className="btn btn-outline-warning me-2" onClick={goToAdmin}>
                 Admin panel

@@ -4,6 +4,7 @@ import Signup from "./components/Signup";
 import Dashboard from "./components/Dashboard";
 import Admin from "./components/Admin";
 import Home from "./components/Home";
+import Services from "./components/Services";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -31,6 +32,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Admin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/browse-services"
+          element={
+            <ProtectedRoute>
+              <Services />
             </ProtectedRoute>
           }
         />
