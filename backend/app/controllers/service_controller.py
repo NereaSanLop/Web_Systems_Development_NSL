@@ -44,6 +44,11 @@ class ServiceController:
         return services_query.order_by(Service.id.desc()).all()
 
     @staticmethod
+    def list_all_services(db: Session):
+        """Return all services for admin-only management views."""
+        return db.query(Service).order_by(Service.id.desc()).all()
+
+    @staticmethod
     def create_service(title: str, cost: int, current_user: User, db: Session):
         """Create a new service linked to the authenticated user email."""
         service = Service(
@@ -81,6 +86,17 @@ class ServiceController:
 
         if service.owner_email != current_user.email:
             raise HTTPException(status_code=403, detail="Not authorized")
+
+        db.delete(service)
+        db.commit()
+        return {"message": "Service deleted successfully"}
+
+    @staticmethod
+    def admin_delete_service(service_id: int, db: Session):
+        """Delete any service by ID for admin-only access."""
+        service = db.query(Service).filter(Service.id == service_id).first()
+        if not service:
+            raise HTTPException(status_code=404, detail="Service not found")
 
         db.delete(service)
         db.commit()

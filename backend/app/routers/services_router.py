@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..dependencies import get_current_user
+from ..dependencies import get_admin_user, get_current_user
 from ..models import User
 from ..schemas import ServiceCreate, ServiceRequestResponse, ServiceUpdate, ServiceResponse
 from ..controllers.service_controller import ServiceController
@@ -68,6 +68,25 @@ def delete_service(
 ):
     """Delete a service that belongs to the authenticated user."""
     return ServiceController.delete_service(service_id, current_user, db)
+
+
+@router.get("/admin/services", response_model=list[ServiceResponse])
+def list_all_services_admin(
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_admin_user),
+):
+    """Return all services for admin management."""
+    return ServiceController.list_all_services(db)
+
+
+@router.delete("/admin/services/{service_id}")
+def delete_service_admin(
+    service_id: int,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_admin_user),
+):
+    """Delete any service by ID for admin management."""
+    return ServiceController.admin_delete_service(service_id, db)
 
 
 @router.post("/services/{service_id}/requests", response_model=ServiceRequestResponse)

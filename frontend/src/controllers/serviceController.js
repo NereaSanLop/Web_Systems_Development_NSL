@@ -73,6 +73,26 @@ class ServiceController {
     }
   }
 
+  static async getAllServicesAdmin() {
+    // Retrieve all services for admin panel management.
+    try {
+      const response = await api.get("/admin/services");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Not authorized";
+    }
+  }
+
+  static async deleteServiceAdmin(serviceId) {
+    // Delete any service from the admin panel.
+    try {
+      const response = await api.delete(`/admin/services/${serviceId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Error deleting service";
+    }
+  }
+
   static async getIncomingRequests() {
     // Load requests received by the authenticated provider.
     try {
