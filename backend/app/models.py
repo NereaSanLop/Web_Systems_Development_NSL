@@ -16,6 +16,16 @@ class User(Base):
     name = Column(String)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
+    credits = Column(Integer, nullable=False, default=10)
     role_id = Column(Integer, ForeignKey("roles.id"))
 
     role = relationship("Role")
+
+
+class Service(Base):
+    __tablename__ = "services"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    cost = Column(Integer, nullable=False)
+    owner_email = Column(String, index=True, nullable=False)

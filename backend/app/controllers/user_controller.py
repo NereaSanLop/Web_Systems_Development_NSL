@@ -10,7 +10,8 @@ class UserController:
             "id": current_user.id,
             "name": current_user.name,
             "email": current_user.email,
-            "role": current_user.role.name
+            "role": current_user.role.name,
+            "credits": current_user.credits,
         }
 
     @staticmethod
@@ -22,7 +23,8 @@ class UserController:
                 "id": u.id,
                 "name": u.name,
                 "email": u.email,
-                "role": u.role.name
+                "role": u.role.name,
+                "credits": u.credits,
             } for u in users
         ]
 
