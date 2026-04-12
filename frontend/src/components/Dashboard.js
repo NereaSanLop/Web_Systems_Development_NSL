@@ -350,15 +350,15 @@ function Dashboard() {
         <div className="container-fluid">
           <span className="navbar-brand mb-0 h1">Time Bank</span>
           <div>
-            <button className="btn btn-outline-info me-2" onClick={goToServices}>
+            <button className="btn tb-btn-browse me-2" onClick={goToServices}>
               Browse services
             </button>
             {user.role === "admin" && (
-              <button className="btn btn-outline-warning me-2" onClick={goToAdmin}>
+              <button className="btn tb-btn-admin me-2" onClick={goToAdmin}>
                 Admin panel
               </button>
             )}
-            <button className="btn btn-outline-light" onClick={handleLogout}>
+            <button className="btn tb-btn-logout" onClick={handleLogout}>
               Log out
             </button>
           </div>
@@ -409,7 +409,7 @@ function Dashboard() {
                           <div className="d-flex gap-2">
                             <button
                               type="button"
-                              className="btn btn-success btn-sm"
+                              className="btn btn-success btn-sm tb-btn-accept"
                               onClick={() => handleAcceptRequest(request.id)}
                               disabled={request.status !== "requested"}
                             >
@@ -417,7 +417,7 @@ function Dashboard() {
                             </button>
                             <button
                               type="button"
-                              className="btn btn-primary btn-sm"
+                              className="btn btn-primary btn-sm tb-btn-complete"
                               onClick={() => handleCompleteRequest(request.id)}
                               disabled={request.status !== "accepted"}
                             >

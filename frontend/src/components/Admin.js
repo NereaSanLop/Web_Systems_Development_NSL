@@ -103,10 +103,10 @@ function Admin() {
         <div className="container-fluid">
           <span className="navbar-brand mb-0 h1">Time Bank - Admin</span>
           <div>
-            <button className="btn btn-outline-info me-2" onClick={goToDashboard}>
+            <button className="btn tb-btn-dashboard me-2" onClick={goToDashboard}>
               Dashboard
             </button>
-            <button className="btn btn-outline-light" onClick={handleLogout}>
+            <button className="btn tb-btn-logout" onClick={handleLogout}>
               Log out
             </button>
           </div>
