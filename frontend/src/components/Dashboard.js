@@ -4,6 +4,8 @@ import UserController from "../controllers/userController";
 import AuthController from "../controllers/authController";
 import ServiceController from "../controllers/serviceController";
 
+const ITEMS_PER_PAGE = 5;
+
 function Dashboard() {
   // Show authenticated user data and dashboard actions.
   const [user, setUser] = useState(null);
@@ -19,6 +21,8 @@ function Dashboard() {
   const [requestsLoading, setRequestsLoading] = useState(true);
   const [serviceForm, setServiceForm] = useState({ title: "", cost: "" });
   const [editingServiceId, setEditingServiceId] = useState(null);
+  const [requestsPage, setRequestsPage] = useState(1);
+  const [historyPage, setHistoryPage] = useState(1);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -293,6 +297,31 @@ function Dashboard() {
     (a, b) => new Date(b.created_at) - new Date(a.created_at)
   );
 
+  const requestsTotalPages = Math.max(1, Math.ceil(incomingRequests.length / ITEMS_PER_PAGE));
+  const historyTotalPages = Math.max(1, Math.ceil(historyRows.length / ITEMS_PER_PAGE));
+
+  const paginatedIncomingRequests = incomingRequests.slice(
+    (requestsPage - 1) * ITEMS_PER_PAGE,
+    requestsPage * ITEMS_PER_PAGE
+  );
+
+  const paginatedHistoryRows = historyRows.slice(
+    (historyPage - 1) * ITEMS_PER_PAGE,
+    historyPage * ITEMS_PER_PAGE
+  );
+
+  useEffect(() => {
+    if (requestsPage > requestsTotalPages) {
+      setRequestsPage(requestsTotalPages);
+    }
+  }, [requestsPage, requestsTotalPages]);
+
+  useEffect(() => {
+    if (historyPage > historyTotalPages) {
+      setHistoryPage(historyTotalPages);
+    }
+  }, [historyPage, historyTotalPages]);
+
   if (error) {
     return (
       <div className="container mt-5">
@@ -337,39 +366,9 @@ function Dashboard() {
       </nav>
 
       <div className="container mt-5">
-        <div className="row justify-content-center">
-          <div className="col-md-6">
-            <div className="card shadow-lg mb-4">
-              <div className="card-body">
-                <h2 className="card-title mb-4">My Profile</h2>
-
-                <div className="mb-3">
-                  <label className="form-label fw-bold">Name:</label>
-                  <p className="form-control-plaintext">{user.name}</p>
-                </div>
-                
-                <div className="mb-3">
-                  <label className="form-label fw-bold">Email:</label>
-                  <p className="form-control-plaintext">{user.email}</p>
-                </div>
-                
-                <div className="mb-3">
-                  <label className="form-label fw-bold">Role:</label>
-                  <p>
-                    <span className={`badge bg-${user.role === "admin" ? "danger" : "success"}`}>
-                      {user.role}
-                    </span>
-                  </p>
-                </div>
-
-                <div className="mb-0">
-                  <label className="form-label fw-bold">Credits:</label>
-                  <p className="form-control-plaintext">{user.credits}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="card shadow-lg mb-4">
+        <div className="row g-4">
+          <div className="col-12 col-lg-6 order-3 order-lg-3">
+            <div className="card shadow-lg h-100">
               <div className="card-body">
                 <h2 className="card-title mb-4">Requests for My Services</h2>
 
@@ -395,7 +394,7 @@ function Dashboard() {
                   <p className="text-muted mb-0">No requests yet.</p>
                 ) : (
                   <div className="list-group">
-                    {incomingRequests.map((request) => (
+                    {paginatedIncomingRequests.map((request) => (
                       <div key={request.id} className="list-group-item">
                         <div className="d-flex justify-content-between align-items-start gap-3 flex-wrap">
                           <div>
@@ -438,10 +437,132 @@ function Dashboard() {
                     ))}
                   </div>
                 )}
+
+                {!requestsLoading && incomingRequests.length > ITEMS_PER_PAGE && (
+                  <div className="d-flex justify-content-between align-items-center mt-3">
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={() => setRequestsPage((prev) => Math.max(1, prev - 1))}
+                      disabled={requestsPage === 1}
+                    >
+                      Previous
+                    </button>
+                    <span className="small text-muted">
+                      Page {requestsPage} of {requestsTotalPages}
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={() => setRequestsPage((prev) => Math.min(requestsTotalPages, prev + 1))}
+                      disabled={requestsPage === requestsTotalPages}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
+          </div>
 
-            <div className="card shadow-lg">
+          <div className="col-12 col-lg-6 order-4 order-lg-4">
+            <div className="card shadow-lg h-100">
+              <div className="card-body">
+                <h2 className="card-title mb-4">Transaction History</h2>
+
+                {historyRows.length === 0 ? (
+                  <p className="text-muted mb-0">No transactions yet.</p>
+                ) : (
+                  <div className="list-group">
+                    {paginatedHistoryRows.map((row) => (
+                      <div key={row.key} className="list-group-item">
+                        <div className="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                          <div>
+                            <div className="fw-bold">
+                              {row.type === "pending"
+                                ? "Pending service request"
+                                : row.reason === "service_payment"
+                                  ? "Service payment"
+                                  : row.reason}
+                            </div>
+                            <div className="small text-muted">With: {row.counterparty_email}</div>
+                            <div className="small text-muted">Service ID: {row.service_id}</div>
+                            <div className="small text-muted">{new Date(row.created_at).toLocaleString()}</div>
+                          </div>
+
+                          <span
+                            className={`badge ${row.type === "pending" ? "bg-warning text-dark" : getTransactionBadgeClass(row.direction)} fs-6`}
+                          >
+                            {getTransactionSign(row.direction)}{row.amount} credits
+                            {row.type === "pending" ? " (pending)" : ""}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {historyRows.length > ITEMS_PER_PAGE && (
+                  <div className="d-flex justify-content-between align-items-center mt-3">
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={() => setHistoryPage((prev) => Math.max(1, prev - 1))}
+                      disabled={historyPage === 1}
+                    >
+                      Previous
+                    </button>
+                    <span className="small text-muted">
+                      Page {historyPage} of {historyTotalPages}
+                    </span>
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={() => setHistoryPage((prev) => Math.min(historyTotalPages, prev + 1))}
+                      disabled={historyPage === historyTotalPages}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="col-12 col-lg-6 order-1 order-lg-1">
+            <div className="card shadow-lg h-100">
+              <div className="card-body">
+                <h2 className="card-title mb-4">My Profile</h2>
+
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Name:</label>
+                  <p className="form-control-plaintext">{user.name}</p>
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Email:</label>
+                  <p className="form-control-plaintext">{user.email}</p>
+                </div>
+
+                <div className="mb-3">
+                  <label className="form-label fw-bold">Role:</label>
+                  <p>
+                    <span className={`badge bg-${user.role === "admin" ? "danger" : "success"}`}>
+                      {user.role}
+                    </span>
+                  </p>
+                </div>
+
+                <div className="mb-0">
+                  <label className="form-label fw-bold">Credits:</label>
+                  <p className="form-control-plaintext">{user.credits}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-12 col-lg-6 order-2 order-lg-2">
+            <div className="card shadow-lg h-100">
               <div className="card-body">
                 <h2 className="card-title mb-4">My Services</h2>
 
@@ -527,44 +648,6 @@ function Dashboard() {
                       </li>
                     ))}
                   </ul>
-                )}
-              </div>
-            </div>
-
-            <div className="card shadow-lg mt-4 mb-4">
-              <div className="card-body">
-                <h2 className="card-title mb-4">Transaction History</h2>
-
-                {historyRows.length === 0 ? (
-                  <p className="text-muted mb-0">No transactions yet.</p>
-                ) : (
-                  <div className="list-group">
-                    {historyRows.map((row) => (
-                      <div key={row.key} className="list-group-item">
-                        <div className="d-flex justify-content-between align-items-start gap-3 flex-wrap">
-                          <div>
-                            <div className="fw-bold">
-                              {row.type === "pending"
-                                ? "Pending service request"
-                                : row.reason === "service_payment"
-                                  ? "Service payment"
-                                  : row.reason}
-                            </div>
-                            <div className="small text-muted">With: {row.counterparty_email}</div>
-                            <div className="small text-muted">Service ID: {row.service_id}</div>
-                            <div className="small text-muted">{new Date(row.created_at).toLocaleString()}</div>
-                          </div>
-
-                          <span
-                            className={`badge ${row.type === "pending" ? "bg-warning text-dark" : getTransactionBadgeClass(row.direction)} fs-6`}
-                          >
-                            {getTransactionSign(row.direction)}{row.amount} credits
-                            {row.type === "pending" ? " (pending)" : ""}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
                 )}
               </div>
             </div>
