@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from ..dependencies import get_current_user
 from ..models import User
-from ..schemas import ServiceCreate, ServiceUpdate, ServiceResponse
+from ..schemas import ServiceCreate, ServiceRequestResponse, ServiceUpdate, ServiceResponse
 from ..controllers.service_controller import ServiceController
 
 router = APIRouter()
@@ -68,3 +68,71 @@ def delete_service(
 ):
     """Delete a service that belongs to the authenticated user."""
     return ServiceController.delete_service(service_id, current_user, db)
+
+
+@router.post("/services/{service_id}/requests", response_model=ServiceRequestResponse)
+def request_service(
+    service_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Create a request for a service offered by another user."""
+    return ServiceController.request_service(service_id, current_user, db)
+
+
+@router.get("/service-requests/incoming", response_model=list[ServiceRequestResponse])
+def list_incoming_requests(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return requests received by the authenticated provider."""
+    return ServiceController.list_incoming_requests(current_user, db)
+
+
+@router.get("/service-requests/outgoing", response_model=list[ServiceRequestResponse])
+def list_outgoing_requests(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Return requests created by the authenticated requester."""
+    return ServiceController.list_outgoing_requests(current_user, db)
+
+
+@router.post("/service-requests/{request_id}/accept", response_model=ServiceRequestResponse)
+def accept_request(
+    request_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Accept a pending request as the service provider."""
+    return ServiceController.accept_request(request_id, current_user, db)
+
+
+@router.post("/service-requests/{request_id}/reject", response_model=ServiceRequestResponse)
+def reject_request(
+    request_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Reject a pending request as the service provider."""
+    return ServiceController.reject_request(request_id, current_user, db)
+
+
+@router.post("/service-requests/{request_id}/cancel", response_model=ServiceRequestResponse)
+def cancel_request(
+    request_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Cancel a request as the requester or provider before completion."""
+    return ServiceController.cancel_request(request_id, current_user, db)
+
+
+@router.post("/service-requests/{request_id}/complete", response_model=ServiceRequestResponse)
+def complete_request(
+    request_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Complete an accepted request and transfer credits safely."""
+    return ServiceController.complete_request(request_id, current_user, db)

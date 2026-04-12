@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from sqlalchemy import text
 from .database import engine, Base, SessionLocal
-from .models import Role, User, Service
+from .models import Role, User, Service, ServiceRequest, Transaction
 from .auth import hash_password
 from .routers import auth_router, users_router, services_router
 from fastapi.middleware.cors import CORSMiddleware

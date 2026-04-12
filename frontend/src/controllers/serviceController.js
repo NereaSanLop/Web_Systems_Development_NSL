@@ -23,6 +23,16 @@ class ServiceController {
     }
   }
 
+  static async requestService(serviceId) {
+    // Create a pending request for a browsed service.
+    try {
+      const response = await api.post(`/services/${serviceId}/requests`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Error creating service request";
+    }
+  }
+
   static async getMyServices() {
     // Load services created by the authenticated user.
     try {
@@ -60,6 +70,56 @@ class ServiceController {
       return response.data;
     } catch (error) {
       throw error.response?.data?.detail || "Error deleting service";
+    }
+  }
+
+  static async getIncomingRequests() {
+    // Load requests received by the authenticated provider.
+    try {
+      const response = await api.get("/service-requests/incoming");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Error loading incoming requests";
+    }
+  }
+
+  static async getOutgoingRequests() {
+    // Load requests created by the authenticated requester.
+    try {
+      const response = await api.get("/service-requests/outgoing");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Error loading outgoing requests";
+    }
+  }
+
+  static async acceptRequest(requestId) {
+    // Accept now finalizes the request and applies the credit transfer server-side.
+    try {
+      const response = await api.post(`/service-requests/${requestId}/accept`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Error accepting request";
+    }
+  }
+
+  static async rejectRequest(requestId) {
+    // Reject a request without transferring credits.
+    try {
+      const response = await api.post(`/service-requests/${requestId}/reject`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Error rejecting request";
+    }
+  }
+
+  static async completeRequest(requestId) {
+    // Legacy/manual completion endpoint retained for compatibility.
+    try {
+      const response = await api.post(`/service-requests/${requestId}/complete`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Error completing request";
     }
   }
 }

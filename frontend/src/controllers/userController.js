@@ -40,6 +40,16 @@ class UserController {
       throw error.response?.data?.detail || "Error changing role";
     }
   }
+
+  static async getMyTransactions() {
+    // Retrieve transaction history for the authenticated user.
+    try {
+      const response = await api.get("/transactions/me");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Error loading transactions";
+    }
+  }
 }
 
 export default UserController;

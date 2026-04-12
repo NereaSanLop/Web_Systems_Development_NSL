@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from ..models import User, Role
+from ..models import User, Role, Transaction
 
 class UserController:
     @staticmethod
@@ -57,3 +57,13 @@ class UserController:
         db.refresh(user)
 
         return {"message": f"Role updated to '{new_role}' successfully"}
+
+    @staticmethod
+    def get_my_transactions(current_user: User, db: Session):
+        """Return transaction history for the authenticated user."""
+        return (
+            db.query(Transaction)
+            .filter(Transaction.user_email == current_user.email)
+            .order_by(Transaction.id.desc())
+            .all()
+        )

@@ -8,9 +8,15 @@ function Dashboard() {
   // Show authenticated user data and dashboard actions.
   const [user, setUser] = useState(null);
   const [services, setServices] = useState([]);
+  const [incomingRequests, setIncomingRequests] = useState([]);
+  const [outgoingRequests, setOutgoingRequests] = useState([]);
+  const [transactions, setTransactions] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [serviceError, setServiceError] = useState("");
+  const [requestError, setRequestError] = useState("");
+  const [requestMessage, setRequestMessage] = useState("");
+  const [requestsLoading, setRequestsLoading] = useState(true);
   const [serviceForm, setServiceForm] = useState({ title: "", cost: "" });
   const [editingServiceId, setEditingServiceId] = useState(null);
   const navigate = useNavigate();
@@ -25,15 +31,76 @@ function Dashboard() {
         ]);
         setUser(userData);
         setServices(userServices);
+
+        try {
+          const txData = await UserController.getMyTransactions();
+          setTransactions(txData);
+        } catch (err) {
+          setError(err);
+        }
+
+        try {
+          const requestData = await ServiceController.getIncomingRequests();
+          setIncomingRequests(requestData);
+        } catch (err) {
+          setRequestError(err);
+        }
+
+        try {
+          const outgoingData = await ServiceController.getOutgoingRequests();
+          setOutgoingRequests(outgoingData);
+        } catch (err) {
+          setRequestError(err);
+        }
       } catch (err) {
         setError(err);
       } finally {
         setLoading(false);
+        setRequestsLoading(false);
       }
     };
 
     fetchData();
   }, []);
+
+  useEffect(() => {
+    // Keep incoming requests current while the dashboard is open.
+    const intervalId = setInterval(() => {
+      refreshIncomingRequests();
+      refreshOutgoingRequests();
+    }, 5000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, []);
+
+  const refreshIncomingRequests = async () => {
+    try {
+      const requestData = await ServiceController.getIncomingRequests();
+      setIncomingRequests(requestData);
+    } catch (err) {
+      setRequestError(err);
+    }
+  };
+
+  const refreshOutgoingRequests = async () => {
+    try {
+      const outgoingData = await ServiceController.getOutgoingRequests();
+      setOutgoingRequests(outgoingData);
+    } catch (err) {
+      setRequestError(err);
+    }
+  };
+
+  const refreshTransactions = async () => {
+    try {
+      const txData = await UserController.getMyTransactions();
+      setTransactions(txData);
+    } catch (err) {
+      setError(err);
+    }
+  };
 
   const handleLogout = () => {
     // Clear session data and return to the home page.
@@ -114,6 +181,118 @@ function Dashboard() {
     }
   };
 
+  const handleAcceptRequest = async (requestId) => {
+    setRequestError("");
+    setRequestMessage("");
+
+    try {
+      // Accept only changes request state to accepted.
+      await ServiceController.acceptRequest(requestId);
+      await refreshIncomingRequests();
+      await refreshOutgoingRequests();
+      setRequestMessage("Request accepted. Complete it when the service is finished.");
+    } catch (err) {
+      setRequestError(err);
+      await refreshIncomingRequests();
+      await refreshOutgoingRequests();
+      try {
+        const userData = await UserController.getProfile();
+        setUser(userData);
+      } catch (profileErr) {
+        setError(profileErr);
+      }
+    }
+  };
+
+  const handleCompleteRequest = async (requestId) => {
+    setRequestError("");
+    setRequestMessage("");
+
+    try {
+      await ServiceController.completeRequest(requestId);
+      const userData = await UserController.getProfile();
+      setUser(userData);
+      await refreshIncomingRequests();
+      await refreshOutgoingRequests();
+      await refreshTransactions();
+      setRequestMessage("Request completed and credits transferred.");
+    } catch (err) {
+      setRequestError(err);
+    }
+  };
+
+  const handleRejectRequest = async (requestId) => {
+    setRequestError("");
+    setRequestMessage("");
+
+    try {
+      await ServiceController.rejectRequest(requestId);
+      await refreshIncomingRequests();
+      await refreshOutgoingRequests();
+      setRequestMessage("Request rejected.");
+    } catch (err) {
+      setRequestError(err);
+    }
+  };
+
+  const getServiceTitle = (serviceId) => {
+    const service = services.find((item) => item.id === serviceId);
+    return service ? service.title : `Service #${serviceId}`;
+  };
+
+  const getDisplayStatus = (status) => {
+    // UI label requested as pending for user-friendly wording.
+    if (status === "requested") {
+      return "pending";
+    }
+    return status;
+  };
+
+  const getTransactionSign = (direction) => (direction === "credit" ? "+" : "-");
+
+  const getTransactionBadgeClass = (direction) =>
+    direction === "credit" ? "bg-success" : "bg-danger";
+
+  const pendingHistoryRows = [
+    ...outgoingRequests
+      .filter((request) => request.status === "requested" || request.status === "accepted")
+      .map((request) => ({
+        key: `pending-out-${request.id}`,
+        type: "pending",
+        direction: "debit",
+        amount: request.cost,
+        counterparty_email: request.provider_email,
+        service_id: request.service_id,
+        created_at: request.created_at,
+      })),
+    ...incomingRequests
+      .filter((request) => request.status === "requested" || request.status === "accepted")
+      .map((request) => ({
+        key: `pending-in-${request.id}`,
+        type: "pending",
+        direction: "credit",
+        amount: request.cost,
+        counterparty_email: request.requester_email,
+        service_id: request.service_id,
+        created_at: request.created_at,
+      })),
+  ];
+
+  const completedHistoryRows = transactions.map((tx) => ({
+    key: `tx-${tx.id}`,
+    type: "completed",
+    direction: tx.direction,
+    amount: tx.amount,
+    counterparty_email: tx.counterparty_email,
+    service_id: tx.service_id,
+    created_at: tx.created_at,
+    reason: tx.reason,
+  }));
+
+  const historyRows = [...pendingHistoryRows, ...completedHistoryRows].sort(
+    (a, b) => new Date(b.created_at) - new Date(a.created_at)
+  );
+
   if (error) {
     return (
       <div className="container mt-5">
@@ -187,6 +366,78 @@ function Dashboard() {
                   <label className="form-label fw-bold">Credits:</label>
                   <p className="form-control-plaintext">{user.credits}</p>
                 </div>
+              </div>
+            </div>
+
+            <div className="card shadow-lg mb-4">
+              <div className="card-body">
+                <h2 className="card-title mb-4">Requests for My Services</h2>
+
+                {requestMessage && (
+                  <div className="alert alert-success" role="alert">
+                    {requestMessage}
+                  </div>
+                )}
+
+                {requestError && (
+                  <div className="alert alert-danger" role="alert">
+                    {requestError}
+                  </div>
+                )}
+
+                {requestsLoading ? (
+                  <div className="text-center py-3">
+                    <div className="spinner-border" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  </div>
+                ) : incomingRequests.length === 0 ? (
+                  <p className="text-muted mb-0">No requests yet.</p>
+                ) : (
+                  <div className="list-group">
+                    {incomingRequests.map((request) => (
+                      <div key={request.id} className="list-group-item">
+                        <div className="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                          <div>
+                            <div className="fw-bold">{getServiceTitle(request.service_id)}</div>
+                            <div className="small text-muted">Requested by: {request.requester_email}</div>
+                            <div className="small text-muted">Cost: {request.cost} credits</div>
+                            <div className="small">
+                              Status: <span className="badge bg-secondary text-uppercase">{getDisplayStatus(request.status)}</span>
+                            </div>
+                          </div>
+
+                          <div className="d-flex gap-2">
+                            <button
+                              type="button"
+                              className="btn btn-success btn-sm"
+                              onClick={() => handleAcceptRequest(request.id)}
+                              disabled={request.status !== "requested"}
+                            >
+                              Accept
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-primary btn-sm"
+                              onClick={() => handleCompleteRequest(request.id)}
+                              disabled={request.status !== "accepted"}
+                            >
+                              Complete
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn-outline-danger btn-sm"
+                              onClick={() => handleRejectRequest(request.id)}
+                              disabled={request.status !== "requested"}
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -276,6 +527,44 @@ function Dashboard() {
                       </li>
                     ))}
                   </ul>
+                )}
+              </div>
+            </div>
+
+            <div className="card shadow-lg mt-4 mb-4">
+              <div className="card-body">
+                <h2 className="card-title mb-4">Transaction History</h2>
+
+                {historyRows.length === 0 ? (
+                  <p className="text-muted mb-0">No transactions yet.</p>
+                ) : (
+                  <div className="list-group">
+                    {historyRows.map((row) => (
+                      <div key={row.key} className="list-group-item">
+                        <div className="d-flex justify-content-between align-items-start gap-3 flex-wrap">
+                          <div>
+                            <div className="fw-bold">
+                              {row.type === "pending"
+                                ? "Pending service request"
+                                : row.reason === "service_payment"
+                                  ? "Service payment"
+                                  : row.reason}
+                            </div>
+                            <div className="small text-muted">With: {row.counterparty_email}</div>
+                            <div className="small text-muted">Service ID: {row.service_id}</div>
+                            <div className="small text-muted">{new Date(row.created_at).toLocaleString()}</div>
+                          </div>
+
+                          <span
+                            className={`badge ${row.type === "pending" ? "bg-warning text-dark" : getTransactionBadgeClass(row.direction)} fs-6`}
+                          >
+                            {getTransactionSign(row.direction)}{row.amount} credits
+                            {row.type === "pending" ? " (pending)" : ""}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>

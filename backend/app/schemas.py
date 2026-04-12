@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, EmailStr, Field
 
 class UserCreate(BaseModel):
@@ -35,6 +37,35 @@ class ServiceResponse(BaseModel):
     title: str
     cost: int
     owner_email: str
+
+    class Config:
+        from_attributes = True
+
+
+class ServiceRequestResponse(BaseModel):
+    id: int
+    service_id: int
+    requester_email: str
+    provider_email: str
+    cost: int
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TransactionResponse(BaseModel):
+    id: int
+    user_email: str
+    counterparty_email: str
+    service_id: int
+    service_request_id: int
+    amount: int
+    direction: str
+    reason: str
+    created_at: datetime
 
     class Config:
         from_attributes = True

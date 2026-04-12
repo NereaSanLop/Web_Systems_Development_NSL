@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..schemas import UserResponse
+from ..schemas import TransactionResponse, UserResponse
 from ..models import User
 from ..dependencies import get_current_user, get_admin_user
 from ..controllers import UserController
@@ -12,6 +12,14 @@ router = APIRouter()
 def get_profile(current_user: User = Depends(get_current_user)):
     """Return the current user's profile via the controller."""
     return UserController.get_profile(current_user)
+
+@router.get("/transactions/me", response_model=list[TransactionResponse])
+def get_my_transactions(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Return transaction history for the authenticated user."""
+    return UserController.get_my_transactions(current_user, db)
 
 @router.get("/users", response_model=list[UserResponse])
 def get_all_users(
