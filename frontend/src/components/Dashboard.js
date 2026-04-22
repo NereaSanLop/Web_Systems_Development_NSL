@@ -19,6 +19,7 @@ function Dashboard() {
   const [requestError, setRequestError] = useState("");
   const [requestMessage, setRequestMessage] = useState("");
   const [requestsLoading, setRequestsLoading] = useState(true);
+  const [cancelingRequestId, setCancelingRequestId] = useState(null);
   const [serviceForm, setServiceForm] = useState({ title: "", cost: "" });
   const [editingServiceId, setEditingServiceId] = useState(null);
   const [requestsPage, setRequestsPage] = useState(1);
@@ -239,6 +240,23 @@ function Dashboard() {
     }
   };
 
+  const handleCancelPendingRequest = async (requestId) => {
+    setRequestError("");
+    setRequestMessage("");
+    setCancelingRequestId(requestId);
+
+    try {
+      await ServiceController.cancelRequest(requestId);
+      await refreshIncomingRequests();
+      await refreshOutgoingRequests();
+      setRequestMessage("Request cancelled.");
+    } catch (err) {
+      setRequestError(err);
+    } finally {
+      setCancelingRequestId(null);
+    }
+  };
+
   const getServiceTitle = (serviceId) => {
     const service = services.find((item) => item.id === serviceId);
     return service ? service.title : `Service #${serviceId}`;
@@ -263,6 +281,8 @@ function Dashboard() {
       .map((request) => ({
         key: `pending-out-${request.id}`,
         type: "pending",
+        request_id: request.id,
+        canCancel: true,
         direction: "debit",
         amount: request.cost,
         counterparty_email: request.provider_email,
@@ -274,6 +294,8 @@ function Dashboard() {
       .map((request) => ({
         key: `pending-in-${request.id}`,
         type: "pending",
+        request_id: request.id,
+        canCancel: false,
         direction: "credit",
         amount: request.cost,
         counterparty_email: request.requester_email,
@@ -496,6 +518,17 @@ function Dashboard() {
                             {getTransactionSign(row.direction)}{row.amount} credits
                             {row.type === "pending" ? " (pending)" : ""}
                           </span>
+
+                          {row.type === "pending" && row.canCancel && (
+                            <button
+                              type="button"
+                              className="btn btn-outline-danger btn-sm"
+                              onClick={() => handleCancelPendingRequest(row.request_id)}
+                              disabled={cancelingRequestId === row.request_id}
+                            >
+                              {cancelingRequestId === row.request_id ? "Cancelling..." : "Cancel"}
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}

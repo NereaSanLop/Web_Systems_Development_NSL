@@ -133,6 +133,16 @@ class ServiceController {
     }
   }
 
+  static async cancelRequest(requestId) {
+    // Cancel an open request before completion.
+    try {
+      const response = await api.post(`/service-requests/${requestId}/cancel`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Error cancelling request";
+    }
+  }
+
   static async completeRequest(requestId) {
     // Legacy/manual completion endpoint retained for compatibility.
     try {
