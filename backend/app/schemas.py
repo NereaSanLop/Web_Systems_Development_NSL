@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -17,6 +18,7 @@ class UserResponse(BaseModel):
     email: str
     role: str
     credits: int
+    is_active: bool = True
 
     class Config:
         from_attributes = True
@@ -37,6 +39,9 @@ class ServiceResponse(BaseModel):
     title: str
     cost: int
     owner_email: str
+    is_visible: bool = True
+    avg_rating: Optional[float] = None
+    review_count: int = 0
 
     class Config:
         from_attributes = True
@@ -60,11 +65,37 @@ class TransactionResponse(BaseModel):
     id: int
     user_email: str
     counterparty_email: str
-    service_id: int
-    service_request_id: int
+    service_id: Optional[int] = None
+    service_request_id: Optional[int] = None
     amount: int
     direction: str
     reason: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class PaymentCreate(BaseModel):
+    credits: int = Field(gt=0, le=500)
+
+
+class PaymentResponse(BaseModel):
+    checkout_url: str
+
+
+class ReviewCreate(BaseModel):
+    rating: int = Field(ge=1, le=5)
+    comment: Optional[str] = Field(default=None, max_length=1000)
+
+
+class ReviewResponse(BaseModel):
+    id: int
+    service_request_id: int
+    service_id: int
+    reviewer_email: str
+    rating: int
+    comment: Optional[str] = None
     created_at: datetime
 
     class Config:

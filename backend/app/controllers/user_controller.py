@@ -12,6 +12,7 @@ class UserController:
             "email": current_user.email,
             "role": current_user.role.name,
             "credits": current_user.credits,
+            "is_active": current_user.is_active,
         }
 
     @staticmethod
@@ -25,6 +26,7 @@ class UserController:
                 "email": u.email,
                 "role": u.role.name,
                 "credits": u.credits,
+                "is_active": u.is_active,
             } for u in users
         ]
 
@@ -32,14 +34,31 @@ class UserController:
     def delete_user(user_id: int, db: Session):
         """Delete a user by ID for admin-only access."""
         user = db.query(User).filter(User.id == user_id).first()
-        
+
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
-        
+
         db.delete(user)
         db.commit()
-        
+
         return {"message": "User deleted successfully"}
+
+    @staticmethod
+    def toggle_active(user_id: int, requesting_admin_id: int, db: Session):
+        """Toggle a user's active status. Admins cannot deactivate themselves."""
+        if user_id == requesting_admin_id:
+            raise HTTPException(status_code=400, detail="You cannot deactivate your own account")
+
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        user.is_active = not user.is_active
+        db.commit()
+        db.refresh(user)
+
+        status_label = "activated" if user.is_active else "deactivated"
+        return {"message": f"User {status_label} successfully", "is_active": user.is_active}
 
     @staticmethod
     def change_role(user_id: int, new_role: str, db: Session):
@@ -64,6 +83,15 @@ class UserController:
         return (
             db.query(Transaction)
             .filter(Transaction.user_email == current_user.email)
+            .order_by(Transaction.id.desc())
+            .all()
+        )
+
+    @staticmethod
+    def get_all_transactions_admin(db: Session):
+        """Return all transactions for admin monitoring."""
+        return (
+            db.query(Transaction)
             .order_by(Transaction.id.desc())
             .all()
         )

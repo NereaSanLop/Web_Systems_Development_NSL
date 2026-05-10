@@ -5,6 +5,9 @@ import Dashboard from "./components/Dashboard";
 import Admin from "./components/Admin";
 import Home from "./components/Home";
 import Services from "./components/Services";
+import BuyCredits from "./components/BuyCredits";
+import PaymentSuccess from "./components/PaymentSuccess";
+import PaymentCancel from "./components/PaymentCancel";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -13,12 +16,12 @@ function App() {
     <Router>
       <Routes>
 
-        {/* Rutas públicas */}
+        {/* Public routes */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
-        {/* Rutas protegidas (requieren token) */}
+        {/* Protected routes (require token) */}
         <Route
           path="/dashboard"
           element={
@@ -44,6 +47,30 @@ function App() {
           }
         />
 
+        <Route
+          path="/buy-credits"
+          element={
+            <ProtectedRoute>
+              <BuyCredits />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payment-success"
+          element={
+            <ProtectedRoute>
+              <PaymentSuccess />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/payment-cancel"
+          element={
+            <ProtectedRoute>
+              <PaymentCancel />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </Router>
   );

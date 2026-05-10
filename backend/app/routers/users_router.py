@@ -48,3 +48,20 @@ def change_role(
     """Change a user's role via the controller for admins."""
     new_role = body.get("role")
     return UserController.change_role(user_id, new_role, db)
+
+@router.put("/users/{user_id}/toggle-active")
+def toggle_active(
+    user_id: int,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_admin_user)
+):
+    """Toggle a user's active/inactive status for admins."""
+    return UserController.toggle_active(user_id, admin.id, db)
+
+@router.get("/admin/transactions", response_model=list[TransactionResponse])
+def get_all_transactions_admin(
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_admin_user)
+):
+    """Return all transactions for admin monitoring."""
+    return UserController.get_all_transactions_admin(db)

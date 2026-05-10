@@ -6,6 +6,106 @@ import ServiceController from "../controllers/serviceController";
 
 const ITEMS_PER_PAGE = 5;
 
+const StarRating = ({ value, onChange, readOnly = false }) => {
+  const [hovered, setHovered] = useState(0);
+  return (
+    <span>
+      {[1, 2, 3, 4, 5].map((star) => (
+        <span
+          key={star}
+          style={{
+            cursor: readOnly ? "default" : "pointer",
+            fontSize: "1.4rem",
+            color: star <= (hovered || value) ? "#ffc107" : "#dee2e6",
+          }}
+          onClick={() => !readOnly && onChange && onChange(star)}
+          onMouseEnter={() => !readOnly && setHovered(star)}
+          onMouseLeave={() => !readOnly && setHovered(0)}
+        >
+          ★
+        </span>
+      ))}
+    </span>
+  );
+};
+
+function ReviewModal({ request, onClose, onSubmit }) {
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (rating === 0) {
+      setError("Please select a rating.");
+      return;
+    }
+    setSubmitting(true);
+    setError("");
+    try {
+      await onSubmit(request.id, rating, comment || null);
+      onClose();
+    } catch (err) {
+      setError(err);
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div
+      className="modal d-block"
+      style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+      onClick={onClose}
+    >
+      <div className="modal-dialog modal-dialog-centered" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">Leave a Review</h5>
+            <button type="button" className="btn-close" onClick={onClose} />
+          </div>
+          <form onSubmit={handleSubmit}>
+            <div className="modal-body">
+              <p className="text-muted mb-3">
+                Service request #{request.id} with <strong>{request.provider_email}</strong>
+              </p>
+              <div className="mb-3">
+                <label className="form-label fw-bold">Rating</label>
+                <div>
+                  <StarRating value={rating} onChange={setRating} />
+                </div>
+              </div>
+              <div className="mb-3">
+                <label htmlFor="review-comment" className="form-label fw-bold">
+                  Comment <span className="text-muted fw-normal">(optional)</span>
+                </label>
+                <textarea
+                  id="review-comment"
+                  className="form-control"
+                  rows={3}
+                  maxLength={1000}
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  placeholder="Share your experience…"
+                />
+              </div>
+              {error && <div className="alert alert-danger py-2">{error}</div>}
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-outline-secondary" onClick={onClose}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={submitting}>
+                {submitting ? "Submitting…" : "Submit Review"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Dashboard() {
   // Show authenticated user data and dashboard actions.
   const [user, setUser] = useState(null);
@@ -13,6 +113,7 @@ function Dashboard() {
   const [incomingRequests, setIncomingRequests] = useState([]);
   const [outgoingRequests, setOutgoingRequests] = useState([]);
   const [transactions, setTransactions] = useState([]);
+  const [myReviews, setMyReviews] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [serviceError, setServiceError] = useState("");
@@ -24,6 +125,7 @@ function Dashboard() {
   const [editingServiceId, setEditingServiceId] = useState(null);
   const [requestsPage, setRequestsPage] = useState(1);
   const [historyPage, setHistoryPage] = useState(1);
+  const [reviewModalRequest, setReviewModalRequest] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -57,6 +159,13 @@ function Dashboard() {
         } catch (err) {
           setRequestError(err);
         }
+
+        try {
+          const reviewsData = await ServiceController.getMyReviews();
+          setMyReviews(reviewsData);
+        } catch {
+          // reviews are non-critical
+        }
       } catch (err) {
         setError(err);
       } finally {
@@ -74,10 +183,7 @@ function Dashboard() {
       refreshIncomingRequests();
       refreshOutgoingRequests();
     }, 5000);
-
-    return () => {
-      clearInterval(intervalId);
-    };
+    return () => clearInterval(intervalId);
   }, []);
 
   const refreshIncomingRequests = async () => {
@@ -107,6 +213,15 @@ function Dashboard() {
     }
   };
 
+  const refreshMyReviews = async () => {
+    try {
+      const reviewsData = await ServiceController.getMyReviews();
+      setMyReviews(reviewsData);
+    } catch {
+      // non-critical
+    }
+  };
+
   const handleLogout = () => {
     // Clear session data and return to the home page.
     AuthController.logout();
@@ -122,6 +237,7 @@ function Dashboard() {
     // Navigate users to the browse-services page.
     navigate("/browse-services");
   };
+  const goToBuyCredits = () => navigate("/buy-credits");
 
   const resetServiceForm = () => {
     setServiceForm({ title: "", cost: "" });
@@ -167,10 +283,7 @@ function Dashboard() {
   const handleEditService = (service) => {
     setServiceError("");
     setEditingServiceId(service.id);
-    setServiceForm({
-      title: service.title,
-      cost: String(service.cost),
-    });
+    setServiceForm({ title: service.title, cost: String(service.cost) });
   };
 
   const handleDeleteService = async (serviceId) => {
@@ -178,9 +291,7 @@ function Dashboard() {
     try {
       await ServiceController.deleteService(serviceId);
       setServices((prev) => prev.filter((service) => service.id !== serviceId));
-      if (editingServiceId === serviceId) {
-        resetServiceForm();
-      }
+      if (editingServiceId === serviceId) resetServiceForm();
     } catch (err) {
       setServiceError(err);
     }
@@ -189,7 +300,6 @@ function Dashboard() {
   const handleAcceptRequest = async (requestId) => {
     setRequestError("");
     setRequestMessage("");
-
     try {
       // Accept only changes request state to accepted.
       await ServiceController.acceptRequest(requestId);
@@ -203,8 +313,8 @@ function Dashboard() {
       try {
         const userData = await UserController.getProfile();
         setUser(userData);
-      } catch (profileErr) {
-        setError(profileErr);
+      } catch {
+        // ignore
       }
     }
   };
@@ -257,6 +367,17 @@ function Dashboard() {
     }
   };
 
+  const handleSubmitReview = async (requestId, rating, comment) => {
+    await ServiceController.createReview(requestId, rating, comment);
+    await refreshMyReviews();
+  };
+
+  const reviewedRequestIds = new Set(myReviews.map((r) => r.service_request_id));
+
+  const completedOutgoing = outgoingRequests.filter(
+    (request) => request.status === "completed" && !reviewedRequestIds.has(request.id)
+  );
+
   const getServiceTitle = (serviceId) => {
     const service = services.find((item) => item.id === serviceId);
     return service ? service.title : `Service #${serviceId}`;
@@ -264,10 +385,7 @@ function Dashboard() {
 
   const getDisplayStatus = (status) => {
     // UI label requested as pending for user-friendly wording.
-    if (status === "requested") {
-      return "pending";
-    }
-    return status;
+    return status === "requested" ? "pending" : status;
   };
 
   const getTransactionSign = (direction) => (direction === "credit" ? "+" : "-");
@@ -333,33 +451,27 @@ function Dashboard() {
   );
 
   useEffect(() => {
-    if (requestsPage > requestsTotalPages) {
-      setRequestsPage(requestsTotalPages);
-    }
+    if (requestsPage > requestsTotalPages) setRequestsPage(requestsTotalPages);
   }, [requestsPage, requestsTotalPages]);
 
   useEffect(() => {
-    if (historyPage > historyTotalPages) {
-      setHistoryPage(historyTotalPages);
-    }
+    if (historyPage > historyTotalPages) setHistoryPage(historyTotalPages);
   }, [historyPage, historyTotalPages]);
 
   if (error) {
     return (
       <div className="container mt-5">
-        <div className="alert alert-danger" role="alert">
-          {error}
-        </div>
+        <div className="alert alert-danger" role="alert">{error}</div>
       </div>
     );
   }
 
-  if (loading || !user) {
+  if (loading) {
     return (
       <div className="container mt-5">
         <div className="text-center">
           <div className="spinner-border" role="status">
-            <span className="visually-hidden">Loading...</span>
+            <span className="visually-hidden">Loading…</span>
           </div>
         </div>
       </div>
@@ -368,6 +480,14 @@ function Dashboard() {
 
   return (
     <div className="min-vh-100 bg-light">
+      {reviewModalRequest && (
+        <ReviewModal
+          request={reviewModalRequest}
+          onClose={() => setReviewModalRequest(null)}
+          onSubmit={handleSubmitReview}
+        />
+      )}
+
       <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
         <div className="container-fluid">
           <span className="navbar-brand mb-0 h1">Time Bank</span>
@@ -389,179 +509,8 @@ function Dashboard() {
 
       <div className="container mt-5">
         <div className="row g-4">
-          <div className="col-12 col-lg-6 order-3 order-lg-3">
-            <div className="card shadow-lg h-100">
-              <div className="card-body">
-                <h2 className="card-title mb-4">Requests for My Services</h2>
 
-                {requestMessage && (
-                  <div className="alert alert-success" role="alert">
-                    {requestMessage}
-                  </div>
-                )}
-
-                {requestError && (
-                  <div className="alert alert-danger" role="alert">
-                    {requestError}
-                  </div>
-                )}
-
-                {requestsLoading ? (
-                  <div className="text-center py-3">
-                    <div className="spinner-border" role="status">
-                      <span className="visually-hidden">Loading...</span>
-                    </div>
-                  </div>
-                ) : incomingRequests.length === 0 ? (
-                  <p className="text-muted mb-0">No requests yet.</p>
-                ) : (
-                  <div className="list-group">
-                    {paginatedIncomingRequests.map((request) => (
-                      <div key={request.id} className="list-group-item">
-                        <div className="d-flex justify-content-between align-items-start gap-3 flex-wrap">
-                          <div>
-                            <div className="fw-bold">{getServiceTitle(request.service_id)}</div>
-                            <div className="small text-muted">Requested by: {request.requester_email}</div>
-                            <div className="small text-muted">Cost: {request.cost} credits</div>
-                            <div className="small">
-                              Status: <span className="badge bg-secondary text-uppercase">{getDisplayStatus(request.status)}</span>
-                            </div>
-                          </div>
-
-                          <div className="d-flex gap-2">
-                            <button
-                              type="button"
-                              className="btn btn-success btn-sm tb-btn-accept"
-                              onClick={() => handleAcceptRequest(request.id)}
-                              disabled={request.status !== "requested"}
-                            >
-                              Accept
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-primary btn-sm tb-btn-complete"
-                              onClick={() => handleCompleteRequest(request.id)}
-                              disabled={request.status !== "accepted"}
-                            >
-                              Complete
-                            </button>
-                            <button
-                              type="button"
-                              className="btn btn-outline-danger btn-sm"
-                              onClick={() => handleRejectRequest(request.id)}
-                              disabled={request.status !== "requested"}
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {!requestsLoading && incomingRequests.length > ITEMS_PER_PAGE && (
-                  <div className="d-flex justify-content-between align-items-center mt-3">
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary btn-sm"
-                      onClick={() => setRequestsPage((prev) => Math.max(1, prev - 1))}
-                      disabled={requestsPage === 1}
-                    >
-                      Previous
-                    </button>
-                    <span className="small text-muted">
-                      Page {requestsPage} of {requestsTotalPages}
-                    </span>
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary btn-sm"
-                      onClick={() => setRequestsPage((prev) => Math.min(requestsTotalPages, prev + 1))}
-                      disabled={requestsPage === requestsTotalPages}
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="col-12 col-lg-6 order-4 order-lg-4">
-            <div className="card shadow-lg h-100">
-              <div className="card-body">
-                <h2 className="card-title mb-4">Transaction History</h2>
-
-                {historyRows.length === 0 ? (
-                  <p className="text-muted mb-0">No transactions yet.</p>
-                ) : (
-                  <div className="list-group">
-                    {paginatedHistoryRows.map((row) => (
-                      <div key={row.key} className="list-group-item">
-                        <div className="d-flex justify-content-between align-items-start gap-3 flex-wrap">
-                          <div>
-                            <div className="fw-bold">
-                              {row.type === "pending"
-                                ? "Pending service request"
-                                : row.reason === "service_payment"
-                                  ? "Service payment"
-                                  : row.reason}
-                            </div>
-                            <div className="small text-muted">With: {row.counterparty_email}</div>
-                            <div className="small text-muted">Service ID: {row.service_id}</div>
-                            <div className="small text-muted">{new Date(row.created_at).toLocaleString()}</div>
-                          </div>
-
-                          <span
-                            className={`badge ${row.type === "pending" ? "bg-warning text-dark" : getTransactionBadgeClass(row.direction)} fs-6`}
-                          >
-                            {getTransactionSign(row.direction)}{row.amount} credits
-                            {row.type === "pending" ? " (pending)" : ""}
-                          </span>
-
-                          {row.type === "pending" && row.canCancel && (
-                            <button
-                              type="button"
-                              className="btn btn-outline-danger btn-sm"
-                              onClick={() => handleCancelPendingRequest(row.request_id)}
-                              disabled={cancelingRequestId === row.request_id}
-                            >
-                              {cancelingRequestId === row.request_id ? "Cancelling..." : "Cancel"}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {historyRows.length > ITEMS_PER_PAGE && (
-                  <div className="d-flex justify-content-between align-items-center mt-3">
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary btn-sm"
-                      onClick={() => setHistoryPage((prev) => Math.max(1, prev - 1))}
-                      disabled={historyPage === 1}
-                    >
-                      Previous
-                    </button>
-                    <span className="small text-muted">
-                      Page {historyPage} of {historyTotalPages}
-                    </span>
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary btn-sm"
-                      onClick={() => setHistoryPage((prev) => Math.min(historyTotalPages, prev + 1))}
-                      disabled={historyPage === historyTotalPages}
-                    >
-                      Next
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
+          {/* ── Profile ───────────────────────────────────────────────── */}
           <div className="col-12 col-lg-6 order-1 order-lg-1">
             <div className="card shadow-lg h-100">
               <div className="card-body">
@@ -571,12 +520,10 @@ function Dashboard() {
                   <label className="form-label fw-bold">Name:</label>
                   <p className="form-control-plaintext">{user.name}</p>
                 </div>
-
                 <div className="mb-3">
                   <label className="form-label fw-bold">Email:</label>
                   <p className="form-control-plaintext">{user.email}</p>
                 </div>
-
                 <div className="mb-3">
                   <label className="form-label fw-bold">Role:</label>
                   <p>
@@ -585,15 +532,18 @@ function Dashboard() {
                     </span>
                   </p>
                 </div>
-
-                <div className="mb-0">
+                <div className="mb-3">
                   <label className="form-label fw-bold">Credits:</label>
-                  <p className="form-control-plaintext">{user.credits}</p>
+                  <p className="form-control-plaintext fs-5 fw-semibold">{user.credits}</p>
                 </div>
+                <button className="btn btn-success" onClick={goToBuyCredits}>
+                  Buy Credits
+                </button>
               </div>
             </div>
           </div>
 
+          {/* ── My Services ───────────────────────────────────────────── */}
           <div className="col-12 col-lg-6 order-2 order-lg-2">
             <div className="card shadow-lg h-100">
               <div className="card-body">
@@ -613,7 +563,6 @@ function Dashboard() {
                       required
                     />
                   </div>
-
                   <div className="mb-3">
                     <label htmlFor="service-cost" className="form-label fw-bold">Cost (credits)</label>
                     <input
@@ -629,17 +578,12 @@ function Dashboard() {
                       required
                     />
                   </div>
-
                   <div className="d-flex gap-2">
                     <button type="submit" className="btn btn-primary">
                       {editingServiceId ? "Save changes" : "Create service"}
                     </button>
                     {editingServiceId && (
-                      <button
-                        type="button"
-                        className="btn btn-outline-secondary"
-                        onClick={resetServiceForm}
-                      >
+                      <button type="button" className="btn btn-outline-secondary" onClick={resetServiceForm}>
                         Cancel edit
                       </button>
                     )}
@@ -647,9 +591,7 @@ function Dashboard() {
                 </form>
 
                 {serviceError && (
-                  <div className="alert alert-danger" role="alert">
-                    {serviceError}
-                  </div>
+                  <div className="alert alert-danger" role="alert">{serviceError}</div>
                 )}
 
                 {services.length === 0 ? (
@@ -661,6 +603,15 @@ function Dashboard() {
                         <div>
                           <div className="fw-bold">{service.title}</div>
                           <small className="text-muted">{service.cost} credits</small>
+                          {!service.is_visible && (
+                            <span className="badge bg-secondary ms-2">Hidden by admin</span>
+                          )}
+                          {service.avg_rating != null && (
+                            <span className="ms-2 text-warning small">
+                              {"★".repeat(Math.round(service.avg_rating))}{"☆".repeat(5 - Math.round(service.avg_rating))}
+                              <span className="text-muted"> ({service.review_count})</span>
+                            </span>
+                          )}
                         </div>
                         <div className="d-flex gap-2">
                           <button
@@ -685,6 +636,208 @@ function Dashboard() {
               </div>
             </div>
           </div>
+
+          {/* ── Incoming Requests ─────────────────────────────────────── */}
+          <div className="col-12 col-lg-6 order-3 order-lg-3">
+            <div className="card shadow-lg h-100">
+              <div className="card-body">
+                <h2 className="card-title mb-4">Requests for My Services</h2>
+
+                {requestMessage && (
+                  <div className="alert alert-success" role="alert">{requestMessage}</div>
+                )}
+
+                {requestError && (
+                  <div className="alert alert-danger" role="alert">{requestError}</div>
+                )}
+
+                {requestsLoading ? (
+                  <div className="text-center py-3">
+                    <div className="spinner-border" role="status">
+                      <span className="visually-hidden">Loading…</span>
+                    </div>
+                  </div>
+                ) : incomingRequests.length === 0 ? (
+                  <p className="text-muted mb-0">No requests yet.</p>
+                ) : (
+                  <>
+                    <div className="list-group mb-3">
+                      {paginatedIncomingRequests.map((request) => (
+                        <div key={request.id} className="list-group-item">
+                          <div className="d-flex w-100 justify-content-between">
+                            <div>
+                              <div className="fw-bold">{getServiceTitle(request.service_id)}</div>
+                            </div>
+                          </div>
+                          <div className="small text-muted">Requested by: {request.requester_email}</div>
+                          <div className="small text-muted">Cost: {request.cost} credits</div>
+                          <div className="small">
+                            Status:{" "}
+                            <span className="badge bg-secondary text-uppercase">
+                              {getDisplayStatus(request.status)}
+                            </span>
+                          </div>
+
+                          <div className="d-flex gap-2">
+                            {request.status === "requested" && (
+                              <>
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-success mt-2"
+                                  onClick={() => handleAcceptRequest(request.id)}
+                                >
+                                  Accept
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-danger mt-2"
+                                  onClick={() => handleRejectRequest(request.id)}
+                                >
+                                  Reject
+                                </button>
+                              </>
+                            )}
+                            {request.status === "accepted" && (
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-primary mt-2"
+                                onClick={() => handleCompleteRequest(request.id)}
+                              >
+                                Complete
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <nav aria-label="Requests pagination">
+                      <ul className="pagination justify-content-center mb-0">
+                        {Array.from({ length: requestsTotalPages }, (_, i) => i + 1).map((page) => (
+                          <li key={page} className={`page-item ${requestsPage === page ? "active" : ""}`}>
+                            <button
+                              type="button"
+                              className="page-link"
+                              onClick={() => setRequestsPage(page)}
+                            >
+                              {page}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </nav>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Transaction History ───────────────────────────────────── */}
+          <div className="col-12 col-lg-6 order-4 order-lg-4">
+            <div className="card shadow-lg h-100">
+              <div className="card-body">
+                <h2 className="card-title mb-4">Transaction History</h2>
+
+                {historyRows.length === 0 ? (
+                  <p className="text-muted mb-0">No transactions yet.</p>
+                ) : (
+                  <>
+                    <div className="list-group mb-3">
+                      {paginatedHistoryRows.map((row) => (
+                        <div key={row.key} className="list-group-item d-flex justify-content-between align-items-center">
+                          <div>
+                            <div className="fw-bold">
+                              {row.type === "pending"
+                                ? "Pending service request"
+                                : row.reason === "stripe_topup"
+                                  ? "Credits purchased (Stripe)"
+                                  : row.reason === "service_payment"
+                                    ? "Service payment"
+                                    : row.reason}
+                            </div>
+                            <div className="small text-muted">With: {row.counterparty_email}</div>
+                            {row.service_id && (
+                              <div className="small text-muted">Service ID: {row.service_id}</div>
+                            )}
+                            <div className="small text-muted">
+                              {new Date(row.created_at).toLocaleString()}
+                            </div>
+                          </div>
+
+                          <span
+                            className={`badge ${getTransactionBadgeClass(row.direction)} fs-6`}
+                          >
+                            {getTransactionSign(row.direction)}{row.amount}
+                          </span>
+
+                          {row.type === "pending" && row.canCancel && (
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-danger ms-2"
+                              onClick={() => handleCancelPendingRequest(row.request_id)}
+                              disabled={cancelingRequestId === row.request_id}
+                            >
+                              {cancelingRequestId === row.request_id ? "Cancelling…" : "Cancel"}
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    <nav aria-label="History pagination">
+                      <ul className="pagination justify-content-center mb-0">
+                        {Array.from({ length: historyTotalPages }, (_, i) => i + 1).map((page) => (
+                          <li key={page} className={`page-item ${historyPage === page ? "active" : ""}`}>
+                            <button
+                              type="button"
+                              className="page-link"
+                              onClick={() => setHistoryPage(page)}
+                            >
+                              {page}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </nav>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Pending Reviews ───────────────────────────────────────── */}
+          {completedOutgoing.length > 0 && (
+            <div className="col-12 order-5">
+              <div className="card shadow-lg border-warning">
+                <div className="card-body">
+                  <h2 className="card-title mb-3">
+                    Pending Reviews
+                    <span className="badge bg-warning text-dark ms-2">{completedOutgoing.length}</span>
+                  </h2>
+                  <p className="text-muted small mb-3">
+                    These services you used have not been reviewed yet.
+                  </p>
+                  <div className="list-group">
+                    {completedOutgoing.map((request) => (
+                      <div key={request.id} className="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                          <div className="fw-bold">{getServiceTitle(request.service_id)}</div>
+                          <div className="small text-muted">Provider: {request.provider_email}</div>
+                          <div className="small text-muted">{request.cost} credits · completed</div>
+                        </div>
+                        <button
+                          className="btn btn-warning btn-sm"
+                          onClick={() => setReviewModalRequest(request)}
+                        >
+                          Leave Review
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

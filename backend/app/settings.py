@@ -27,3 +27,9 @@ if not SECRET_KEY or len(SECRET_KEY) < 32:
         "SECRET_KEY no configurada o demasiado corta. "
         "Defínela en variables de entorno o en backend/.env (mínimo 32 caracteres)."
     )
+
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
+
+# Base URL for Stripe redirect URLs (change in production)
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")

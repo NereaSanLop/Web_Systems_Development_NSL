@@ -1,6 +1,7 @@
 from fastapi import HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
-from ..models import Service, ServiceRequest, Transaction, User
+from ..models import Service, ServiceRequest, ServiceReview, Transaction, User
 
 
 class ServiceController:
@@ -12,14 +13,48 @@ class ServiceController:
         return service_request
 
     @staticmethod
+    def _enrich_services_with_ratings(services, db: Session):
+        """Attach avg_rating and review_count to a list of Service ORM objects."""
+        if not services:
+            return []
+
+        service_ids = [s.id for s in services]
+        rating_rows = (
+            db.query(
+                ServiceReview.service_id,
+                func.avg(ServiceReview.rating).label("avg_rating"),
+                func.count(ServiceReview.id).label("review_count"),
+            )
+            .filter(ServiceReview.service_id.in_(service_ids))
+            .group_by(ServiceReview.service_id)
+            .all()
+        )
+        rating_map = {r.service_id: (r.avg_rating, r.review_count) for r in rating_rows}
+
+        result = []
+        for s in services:
+            avg, count = rating_map.get(s.id, (None, 0))
+            result.append({
+                "id": s.id,
+                "title": s.title,
+                "cost": s.cost,
+                "owner_email": s.owner_email,
+                "is_visible": s.is_visible,
+                "avg_rating": round(float(avg), 2) if avg is not None else None,
+                "review_count": count,
+            })
+        return result
+
+    @staticmethod
     def list_my_services(current_user: User, db: Session):
         """Return services owned by the authenticated user."""
-        return (
+        services = (
             db.query(Service)
             .filter(Service.owner_email == current_user.email)
             .order_by(Service.id.desc())
             .all()
         )
+        return ServiceController._enrich_services_with_ratings(services, db)
 
     @staticmethod
     def browse_services(
@@ -30,7 +65,10 @@ class ServiceController:
         max_cost: int | None = None,
     ):
         """Return services from other users with optional simple filters."""
-        services_query = db.query(Service).filter(Service.owner_email != current_user.email)
+        services_query = db.query(Service).filter(
+            Service.owner_email != current_user.email,
+            Service.is_visible == True,
+        )
 
         if query:
             services_query = services_query.filter(Service.title.ilike(f"%{query.strip()}%"))
@@ -41,12 +79,14 @@ class ServiceController:
         if max_cost is not None:
             services_query = services_query.filter(Service.cost <= max_cost)
 
-        return services_query.order_by(Service.id.desc()).all()
+        services = services_query.order_by(Service.id.desc()).all()
+        return ServiceController._enrich_services_with_ratings(services, db)
 
     @staticmethod
     def list_all_services(db: Session):
         """Return all services for admin-only management views."""
-        return db.query(Service).order_by(Service.id.desc()).all()
+        services = db.query(Service).order_by(Service.id.desc()).all()
+        return ServiceController._enrich_services_with_ratings(services, db)
 
     @staticmethod
     def create_service(title: str, cost: int, current_user: User, db: Session):
@@ -55,11 +95,14 @@ class ServiceController:
             title=title.strip(),
             cost=cost,
             owner_email=current_user.email,
+            is_visible=True,
         )
         db.add(service)
         db.commit()
         db.refresh(service)
-        return service
+        return {"id": service.id, "title": service.title, "cost": service.cost,
+                "owner_email": service.owner_email, "is_visible": service.is_visible,
+                "avg_rating": None, "review_count": 0}
 
     @staticmethod
     def update_service(service_id: int, title: str, cost: int, current_user: User, db: Session):
@@ -75,7 +118,9 @@ class ServiceController:
         service.cost = cost
         db.commit()
         db.refresh(service)
-        return service
+
+        enriched = ServiceController._enrich_services_with_ratings([service], db)
+        return enriched[0]
 
     @staticmethod
     def delete_service(service_id: int, current_user: User, db: Session):
@@ -101,6 +146,20 @@ class ServiceController:
         db.delete(service)
         db.commit()
         return {"message": "Service deleted successfully"}
+
+    @staticmethod
+    def admin_toggle_visibility(service_id: int, db: Session):
+        """Toggle a service's visibility. Hidden services won't appear in browse."""
+        service = db.query(Service).filter(Service.id == service_id).first()
+        if not service:
+            raise HTTPException(status_code=404, detail="Service not found")
+
+        service.is_visible = not service.is_visible
+        db.commit()
+        db.refresh(service)
+
+        label = "visible" if service.is_visible else "hidden"
+        return {"message": f"Service is now {label}", "is_visible": service.is_visible}
 
     @staticmethod
     def request_service(service_id: int, current_user: User, db: Session):
@@ -139,6 +198,15 @@ class ServiceController:
         db.commit()
         db.refresh(service_request)
         return service_request
+
+    @staticmethod
+    def list_all_requests_admin(db: Session):
+        """Return all service requests for admin monitoring."""
+        return (
+            db.query(ServiceRequest)
+            .order_by(ServiceRequest.id.desc())
+            .all()
+        )
 
     @staticmethod
     def list_incoming_requests(current_user: User, db: Session):
@@ -260,3 +328,70 @@ class ServiceController:
         db.commit()
         db.refresh(service_request)
         return service_request
+
+    # ── Review methods ──────────────────────────────────────────────────────────
+
+    @staticmethod
+    def create_review(request_id: int, rating: int, comment: str | None, current_user: User, db: Session):
+        """Submit a review for a completed service request (requester only, once)."""
+        service_request = ServiceController._get_service_request_or_404(request_id, db)
+
+        if service_request.requester_email != current_user.email:
+            raise HTTPException(status_code=403, detail="Only the requester can review this service")
+
+        if service_request.status != "completed":
+            raise HTTPException(status_code=400, detail="You can only review completed services")
+
+        existing = db.query(ServiceReview).filter(
+            ServiceReview.service_request_id == request_id
+        ).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="You already submitted a review for this service")
+
+        review = ServiceReview(
+            service_request_id=request_id,
+            service_id=service_request.service_id,
+            reviewer_email=current_user.email,
+            rating=rating,
+            comment=comment,
+        )
+        db.add(review)
+        db.commit()
+        db.refresh(review)
+        return review
+
+    @staticmethod
+    def get_reviews_for_service(service_id: int, db: Session):
+        """Return all reviews for a specific service."""
+        return (
+            db.query(ServiceReview)
+            .filter(ServiceReview.service_id == service_id)
+            .order_by(ServiceReview.id.desc())
+            .all()
+        )
+
+    @staticmethod
+    def get_my_reviews(current_user: User, db: Session):
+        """Return reviews submitted by the current user."""
+        return (
+            db.query(ServiceReview)
+            .filter(ServiceReview.reviewer_email == current_user.email)
+            .order_by(ServiceReview.id.desc())
+            .all()
+        )
+
+    @staticmethod
+    def get_all_reviews_admin(db: Session):
+        """Return all reviews for admin moderation."""
+        return db.query(ServiceReview).order_by(ServiceReview.id.desc()).all()
+
+    @staticmethod
+    def delete_review_admin(review_id: int, db: Session):
+        """Delete a review by ID for admin moderation."""
+        review = db.query(ServiceReview).filter(ServiceReview.id == review_id).first()
+        if not review:
+            raise HTTPException(status_code=404, detail="Review not found")
+
+        db.delete(review)
+        db.commit()
+        return {"message": "Review deleted successfully"}

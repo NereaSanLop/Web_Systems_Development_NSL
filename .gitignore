@@ -10,3 +10,4 @@ __pycache__/
 backend/.env
 
 DOCUMENTATION.md
+labpdf.md

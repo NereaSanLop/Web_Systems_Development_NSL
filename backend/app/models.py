@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Integer, String, ForeignKey
+from sqlalchemy import Boolean, Column, DateTime, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
 from .database import Base
 
@@ -19,6 +19,7 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     credits = Column(Integer, nullable=False, default=10)
+    is_active = Column(Boolean, nullable=False, default=True)
     role_id = Column(Integer, ForeignKey("roles.id"))
 
     role = relationship("Role")
@@ -31,6 +32,7 @@ class Service(Base):
     title = Column(String, nullable=False)
     cost = Column(Integer, nullable=False)
     owner_email = Column(String, index=True, nullable=False)
+    is_visible = Column(Boolean, nullable=False, default=True)
 
 
 class ServiceRequest(Base):
@@ -54,8 +56,8 @@ class Transaction(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_email = Column(String, index=True, nullable=False)
     counterparty_email = Column(String, index=True, nullable=False)
-    service_id = Column(Integer, ForeignKey("services.id"), nullable=False)
-    service_request_id = Column(Integer, ForeignKey("service_requests.id"), nullable=False)
+    service_id = Column(Integer, ForeignKey("services.id"), nullable=True)
+    service_request_id = Column(Integer, ForeignKey("service_requests.id"), nullable=True)
     amount = Column(Integer, nullable=False)
     direction = Column(String, nullable=False)  # debit | credit
     reason = Column(String, nullable=False, default="service_payment")
@@ -63,3 +65,31 @@ class Transaction(Base):
 
     service = relationship("Service")
     service_request = relationship("ServiceRequest")
+
+
+class StripePayment(Base):
+    __tablename__ = "stripe_payments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    stripe_session_id = Column(String, unique=True, index=True, nullable=False)
+    user_email = Column(String, index=True, nullable=False)
+    credits = Column(Integer, nullable=False)
+    amount_eur_cents = Column(Integer, nullable=False)
+    status = Column(String, nullable=False, default="pending")  # pending | completed | failed
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+
+class ServiceReview(Base):
+    __tablename__ = "service_reviews"
+
+    id = Column(Integer, primary_key=True, index=True)
+    service_request_id = Column(Integer, ForeignKey("service_requests.id"), unique=True, nullable=False)
+    service_id = Column(Integer, ForeignKey("services.id"), nullable=False)
+    reviewer_email = Column(String, index=True, nullable=False)
+    rating = Column(Integer, nullable=False)  # 1-5
+    comment = Column(String, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    service_request = relationship("ServiceRequest")
+    service = relationship("Service")

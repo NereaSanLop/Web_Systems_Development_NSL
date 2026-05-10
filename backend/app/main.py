@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 from sqlalchemy import text
 from .database import engine, Base, SessionLocal
-from .models import Role, User, Service, ServiceRequest, Transaction
+from .models import Role, User, Service, ServiceRequest, Transaction, StripePayment, ServiceReview
 from .auth import hash_password
 from .routers import auth_router, users_router, services_router
+from .routers import payment_router
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -19,23 +20,30 @@ app.add_middleware(
 Base.metadata.create_all(bind=engine)
 
 
-def ensure_user_credits_column():
-    # For existing SQLite files, add the new credits column if missing.
+def ensure_schema():
+    """Apply incremental migrations for columns added after initial deployment."""
     with engine.connect() as connection:
-        columns = connection.execute(text("PRAGMA table_info(users)")).fetchall()
-        column_names = [col[1] for col in columns]
-        if "credits" not in column_names:
-            connection.execute(
-                text("ALTER TABLE users ADD COLUMN credits INTEGER NOT NULL DEFAULT 10")
-            )
-            connection.commit()
+        # ── users ──
+        user_cols = [col[1] for col in connection.execute(text("PRAGMA table_info(users)")).fetchall()]
+        if "credits" not in user_cols:
+            connection.execute(text("ALTER TABLE users ADD COLUMN credits INTEGER NOT NULL DEFAULT 10"))
+        if "is_active" not in user_cols:
+            connection.execute(text("ALTER TABLE users ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1"))
+
+        # ── services ──
+        service_cols = [col[1] for col in connection.execute(text("PRAGMA table_info(services)")).fetchall()]
+        if "is_visible" not in service_cols:
+            connection.execute(text("ALTER TABLE services ADD COLUMN is_visible BOOLEAN NOT NULL DEFAULT 1"))
+
+        connection.commit()
 
 
-ensure_user_credits_column()
+ensure_schema()
 
 app.include_router(auth_router.router)
 app.include_router(users_router.router)
 app.include_router(services_router.router)
+app.include_router(payment_router.router)
 
 @app.on_event("startup")
 def create_roles():
@@ -53,6 +61,7 @@ def create_roles():
             email="admin@admin.com",
             hashed_password=hash_password("admin"),
             credits=10,
+            is_active=True,
             role_id=admin_role.id,
         )
         db.add(admin_user)

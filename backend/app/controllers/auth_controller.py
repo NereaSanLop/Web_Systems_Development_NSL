@@ -12,32 +12,36 @@ class AuthController:
             raise HTTPException(status_code=400, detail="Email already registered")
 
         role = db.query(Role).filter(Role.name == "user").first()
-        
+
         new_user = User(
             name=name,
             email=email,
             hashed_password=hash_password(password),
             credits=10,
+            is_active=True,
             role_id=role.id
         )
-        
+
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
-        
+
         return {"message": "User created successfully"}
 
     @staticmethod
     def login(email: str, password: str, db: Session):
         """Authenticate a user and return an access token."""
         db_user = db.query(User).filter(User.email == email).first()
-        
+
         if not db_user or not verify_password(password, db_user.hashed_password):
             raise HTTPException(status_code=401, detail="Invalid credentials")
-        
+
+        if not db_user.is_active:
+            raise HTTPException(status_code=403, detail="Account is deactivated. Contact an administrator.")
+
         token = create_access_token({
             "user_id": db_user.id,
             "role": db_user.role.name
         })
-        
+
         return {"access_token": token}

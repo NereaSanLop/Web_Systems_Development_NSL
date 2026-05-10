@@ -41,10 +41,28 @@ class UserController {
     }
   }
 
+  static async toggleUserActive(userId) {
+    try {
+      const response = await api.put(`/users/${userId}/toggle-active`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Error toggling user status";
+    }
+  }
+
   static async getMyTransactions() {
     // Retrieve transaction history for the authenticated user.
     try {
       const response = await api.get("/transactions/me");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Error loading transactions";
+    }
+  }
+
+  static async getAllTransactionsAdmin() {
+    try {
+      const response = await api.get("/admin/transactions");
       return response.data;
     } catch (error) {
       throw error.response?.data?.detail || "Error loading transactions";

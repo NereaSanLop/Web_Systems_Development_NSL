@@ -93,6 +93,15 @@ class ServiceController {
     }
   }
 
+  static async toggleServiceVisibility(serviceId) {
+    try {
+      const response = await api.put(`/admin/services/${serviceId}/toggle-visibility`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Error toggling visibility";
+    }
+  }
+
   static async getIncomingRequests() {
     // Load requests received by the authenticated provider.
     try {
@@ -150,6 +159,62 @@ class ServiceController {
       return response.data;
     } catch (error) {
       throw error.response?.data?.detail || "Error completing request";
+    }
+  }
+
+  // ── Reviews ────────────────────────────────────────────────────────────────
+
+  static async createReview(requestId, rating, comment) {
+    try {
+      const response = await api.post(`/service-requests/${requestId}/review`, { rating, comment });
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Error submitting review";
+    }
+  }
+
+  static async getServiceReviews(serviceId) {
+    try {
+      const response = await api.get(`/services/${serviceId}/reviews`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Error loading reviews";
+    }
+  }
+
+  static async getMyReviews() {
+    try {
+      const response = await api.get("/reviews/mine");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Error loading reviews";
+    }
+  }
+
+  static async getAllServiceRequestsAdmin() {
+    try {
+      const response = await api.get("/admin/service-requests");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Error loading service requests";
+    }
+  }
+
+  static async getAllReviewsAdmin() {
+    try {
+      const response = await api.get("/admin/reviews");
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Error loading reviews";
+    }
+  }
+
+  static async deleteReviewAdmin(reviewId) {
+    try {
+      const response = await api.delete(`/admin/reviews/${reviewId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data?.detail || "Error deleting review";
     }
   }
 }

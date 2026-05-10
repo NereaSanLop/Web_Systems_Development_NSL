@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from .database import get_db
@@ -19,8 +19,12 @@ def get_current_user(
         user = db.query(User).filter(User.id == user_id).first()
         if user is None:
             raise HTTPException(status_code=401, detail="User not found")
+        if not user.is_active:
+            raise HTTPException(status_code=403, detail="Account is deactivated. Contact an administrator.")
         return user
-    except:
+    except HTTPException:
+        raise
+    except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 def get_admin_user(current_user: User = Depends(get_current_user)):
