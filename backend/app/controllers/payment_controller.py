@@ -110,6 +110,16 @@ class PaymentController:
         user.credits += payment.credits
         payment.status = "completed"
         payment.completed_at = datetime.utcnow()
+
+        # Create a transaction record for audit trail
+        transaction = Transaction(
+            user_email=user.email,
+            counterparty_email="stripe@timebank.local",  # System identifier
+            amount=payment.credits,
+            direction="credit",
+            reason="stripe_topup",
+        )
+        db.add(transaction)
         db.commit()
 
     @staticmethod

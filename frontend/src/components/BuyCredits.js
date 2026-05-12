@@ -1,10 +1,27 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PaymentController from "../controllers/paymentController";
 
 function BuyCredits() {
   const [loading, setLoading] = useState(false);
+  const [payments, setPayments] = useState([]);
+  const [loadingPayments, setLoadingPayments] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    loadPaymentHistory();
+  }, []);
+
+  const loadPaymentHistory = async () => {
+    try {
+      const data = await PaymentController.getMyPayments();
+      setPayments(data);
+    } catch (error) {
+      console.error("Error loading payment history:", error);
+    } finally {
+      setLoadingPayments(false);
+    }
+  };
 
   const creditPackages = [
     { credits: 5, price: 5 },
@@ -42,7 +59,7 @@ function BuyCredits() {
         <h2 className="mb-4">Buy Time Credits</h2>
         <p className="text-muted mb-5">1 credit = €1.00</p>
 
-        <div className="row g-4">
+        <div className="row g-4 mb-5">
           {creditPackages.map((pkg) => (
             <div key={pkg.credits} className="col-12 col-sm-6 col-md-3">
               <div className="card shadow-lg h-100">
@@ -61,6 +78,48 @@ function BuyCredits() {
             </div>
           ))}
         </div>
+
+        {/* Payment History Section */}
+        <h3 className="mt-5 mb-3">Payment History</h3>
+        {loadingPayments ? (
+          <p className="text-muted">Loading payment history...</p>
+        ) : payments.length === 0 ? (
+          <p className="text-muted">No payment records yet.</p>
+        ) : (
+          <div className="table-responsive">
+            <table className="table table-striped table-hover">
+              <thead className="table-dark">
+                <tr>
+                  <th>Credits</th>
+                  <th>Amount (€)</th>
+                  <th>Status</th>
+                  <th>Created</th>
+                  <th>Completed</th>
+                </tr>
+              </thead>
+              <tbody>
+                {payments.map((payment) => (
+                  <tr key={payment.id}>
+                    <td className="fw-bold">{payment.credits}</td>
+                    <td>€{(payment.amount_eur_cents / 100).toFixed(2)}</td>
+                    <td>
+                      <span className={`badge bg-${
+                        payment.status === "completed" ? "success" :
+                        payment.status === "pending" ? "warning" : "danger"
+                      }`}>
+                        {payment.status.charAt(0).toUpperCase() + payment.status.slice(1)}
+                      </span>
+                    </td>
+                    <td>{new Date(payment.created_at).toLocaleString()}</td>
+                    <td>
+                      {payment.completed_at ? new Date(payment.completed_at).toLocaleString() : "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
