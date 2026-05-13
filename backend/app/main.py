@@ -26,7 +26,7 @@ def ensure_schema():
         # ── users ──
         user_cols = [col[1] for col in connection.execute(text("PRAGMA table_info(users)")).fetchall()]
         if "credits" not in user_cols:
-            connection.execute(text("ALTER TABLE users ADD COLUMN credits INTEGER NOT NULL DEFAULT 10"))
+            connection.execute(text("ALTER TABLE users ADD COLUMN credits INTEGER NOT NULL DEFAULT 0"))
         if "is_active" not in user_cols:
             connection.execute(text("ALTER TABLE users ADD COLUMN is_active BOOLEAN NOT NULL DEFAULT 1"))
 
@@ -60,7 +60,7 @@ def create_roles():
             name="Admin",
             email="admin@admin.com",
             hashed_password=hash_password("admin"),
-            credits=10,
+            credits=0,
             is_active=True,
             role_id=admin_role.id,
         )

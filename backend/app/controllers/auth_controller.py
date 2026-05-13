@@ -17,7 +17,7 @@ class AuthController:
             name=name,
             email=email,
             hashed_password=hash_password(password),
-            credits=10,
+            credits=0,
             is_active=True,
             role_id=role.id
         )

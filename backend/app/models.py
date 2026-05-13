@@ -18,7 +18,7 @@ class User(Base):
     name = Column(String)
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
-    credits = Column(Integer, nullable=False, default=10)
+    credits = Column(Integer, nullable=False, default=0)
     is_active = Column(Boolean, nullable=False, default=True)
     role_id = Column(Integer, ForeignKey("roles.id"))
 
