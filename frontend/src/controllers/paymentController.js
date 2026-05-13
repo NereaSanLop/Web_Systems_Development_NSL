@@ -1,6 +1,9 @@
 import api from "../services/api";
 
 class PaymentController {
+  /**
+   * Initiate a Stripe Checkout Session to purchase time credits.
+   */
   static async createCheckoutSession(credits) {
     try {
       const response = await api.post("/payments/create-checkout-session", { credits });
@@ -10,6 +13,9 @@ class PaymentController {
     }
   }
 
+  /**
+   * Retrieve the current user's Stripe payment history.
+   */
   static async getMyPayments() {
     try {
       const response = await api.get("/payments/my");
@@ -19,6 +25,9 @@ class PaymentController {
     }
   }
 
+  /**
+   * Retrieve all Stripe payments for admin monitoring.
+   */
   static async getAllPaymentsAdmin() {
     try {
       const response = await api.get("/admin/payments");

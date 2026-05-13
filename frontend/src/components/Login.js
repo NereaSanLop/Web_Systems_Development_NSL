@@ -10,8 +10,10 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  /**
+   * Handle the form submission for user login and navigate to the dashboard on success.
+   */
   const handleLogin = async (e) => {
-    // Submit credentials and redirect to the dashboard on success.
     e.preventDefault();
     setError("");
     setLoading(true);

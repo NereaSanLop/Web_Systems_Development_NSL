@@ -11,8 +11,10 @@ function Signup() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  /**
+   * Handle the form submission for user signup and navigate to the login page on success.
+   */
   const handleSignup = async (e) => {
-    // Submit registration data and navigate to login on success.
     e.preventDefault();
     setError("");
     setLoading(true);

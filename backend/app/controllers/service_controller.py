@@ -8,6 +8,7 @@ from ..models import Service, ServiceRequest, ServiceReview, Transaction, User
 class ServiceController:
     @staticmethod
     def _get_service_request_or_404(request_id: int, db: Session):
+        """Retrieve a service request by ID or raise a 404 HTTPException if not found."""
         service_request = db.query(ServiceRequest).filter(ServiceRequest.id == request_id).first()
         if not service_request:
             raise HTTPException(status_code=404, detail="Service request not found")

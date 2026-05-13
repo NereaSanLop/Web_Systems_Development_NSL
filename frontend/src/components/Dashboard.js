@@ -6,6 +6,9 @@ import ServiceController from "../controllers/serviceController";
 
 const ITEMS_PER_PAGE = 5;
 
+/**
+ * Display an interactive or read-only star rating component for service reviews.
+ */
 const StarRating = ({ value, onChange, readOnly = false }) => {
   const [hovered, setHovered] = useState(0);
   return (
@@ -29,6 +32,9 @@ const StarRating = ({ value, onChange, readOnly = false }) => {
   );
 };
 
+/**
+ * Modal dialog for submitting reviews of completed service requests.
+ */
 function ReviewModal({ request, onClose, onSubmit }) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
@@ -186,6 +192,9 @@ function Dashboard() {
     return () => clearInterval(intervalId);
   }, []);
 
+  /**
+   * Fetch and update the list of incoming service requests for the current provider.
+   */
   const refreshIncomingRequests = async () => {
     try {
       const requestData = await ServiceController.getIncomingRequests();
@@ -195,6 +204,9 @@ function Dashboard() {
     }
   };
 
+  /**
+   * Fetch and update the list of outgoing service requests made by the current requester.
+   */
   const refreshOutgoingRequests = async () => {
     try {
       const outgoingData = await ServiceController.getOutgoingRequests();
@@ -204,6 +216,9 @@ function Dashboard() {
     }
   };
 
+  /**
+   * Fetch and update the transaction history for the authenticated user.
+   */
   const refreshTransactions = async () => {
     try {
       const txData = await UserController.getMyTransactions();
@@ -213,6 +228,9 @@ function Dashboard() {
     }
   };
 
+  /**
+   * Fetch and update the list of reviews submitted by the current user.
+   */
   const refreshMyReviews = async () => {
     try {
       const reviewsData = await ServiceController.getMyReviews();
@@ -228,27 +246,44 @@ function Dashboard() {
     navigate("/");
   };
 
+  /**
+   * Navigate admin users to the admin panel.
+   */
   const goToAdmin = () => {
-    // Navigate admins to the admin panel.
     navigate("/admin");
   };
 
+  /**
+   * Navigate users to the browse services page.
+   */
   const goToServices = () => {
-    // Navigate users to the browse-services page.
     navigate("/browse-services");
   };
+
+  /**
+   * Navigate users to the buy credits page.
+   */
   const goToBuyCredits = () => navigate("/buy-credits");
 
+  /**
+   * Clear the service form fields and exit edit mode.
+   */
   const resetServiceForm = () => {
     setServiceForm({ title: "", cost: "" });
     setEditingServiceId(null);
   };
 
+  /**
+   * Update the service form state with the new input value.
+   */
   const handleServiceInputChange = (event) => {
     const { name, value } = event.target;
     setServiceForm((prev) => ({ ...prev, [name]: value }));
   };
 
+  /**
+   * Create a new service or update an existing one depending on the editing state.
+   */
   const handleCreateOrUpdateService = async (event) => {
     event.preventDefault();
     setServiceError("");
@@ -280,12 +315,18 @@ function Dashboard() {
     }
   };
 
+  /**
+   * Set the service form to edit mode with the selected service's data.
+   */
   const handleEditService = (service) => {
     setServiceError("");
     setEditingServiceId(service.id);
     setServiceForm({ title: service.title, cost: String(service.cost) });
   };
 
+  /**
+   * Delete a service and reset the form if it was being edited.
+   */
   const handleDeleteService = async (serviceId) => {
     setServiceError("");
     try {
@@ -297,6 +338,9 @@ function Dashboard() {
     }
   };
 
+  /**
+   * Accept an incoming service request, marking it as accepted without completing the service.
+   */
   const handleAcceptRequest = async (requestId) => {
     setRequestError("");
     setRequestMessage("");
@@ -319,6 +363,9 @@ function Dashboard() {
     }
   };
 
+  /**
+   * Complete an accepted request, transferring credits from requester to provider.
+   */
   const handleCompleteRequest = async (requestId) => {
     setRequestError("");
     setRequestMessage("");
@@ -336,6 +383,9 @@ function Dashboard() {
     }
   };
 
+  /**
+   * Reject a pending service request without accepting it.
+   */
   const handleRejectRequest = async (requestId) => {
     setRequestError("");
     setRequestMessage("");
@@ -350,6 +400,9 @@ function Dashboard() {
     }
   };
 
+  /**
+   * Cancel an open service request as either requester or provider.
+   */
   const handleCancelPendingRequest = async (requestId) => {
     setRequestError("");
     setRequestMessage("");
@@ -367,6 +420,9 @@ function Dashboard() {
     }
   };
 
+  /**
+   * Submit a review for a completed service request and refresh the reviews list.
+   */
   const handleSubmitReview = async (requestId, rating, comment) => {
     await ServiceController.createReview(requestId, rating, comment);
     await refreshMyReviews();
@@ -378,18 +434,29 @@ function Dashboard() {
     (request) => request.status === "completed" && !reviewedRequestIds.has(request.id)
   );
 
+  /**
+   * Retrieve the title of a service by its ID, or return a fallback identifier.
+   */
   const getServiceTitle = (serviceId) => {
     const service = services.find((item) => item.id === serviceId);
     return service ? service.title : `Service #${serviceId}`;
   };
 
+  /**
+   * Convert request status to a user-friendly label, showing 'pending' instead of 'requested'.
+   */
   const getDisplayStatus = (status) => {
-    // UI label requested as pending for user-friendly wording.
     return status === "requested" ? "pending" : status;
   };
 
+  /**
+   * Return the appropriate sign ('+' or '-') for displaying transaction amounts.
+   */
   const getTransactionSign = (direction) => (direction === "credit" ? "+" : "-");
 
+  /**
+   * Return the Bootstrap badge class color based on transaction direction (credit or debit).
+   */
   const getTransactionBadgeClass = (direction) =>
     direction === "credit" ? "bg-success" : "bg-danger";
 

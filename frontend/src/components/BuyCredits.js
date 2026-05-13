@@ -12,6 +12,9 @@ function BuyCredits() {
     loadPaymentHistory();
   }, []);
 
+  /**
+   * Fetch the current user's payment transaction history.
+   */
   const loadPaymentHistory = async () => {
     try {
       const data = await PaymentController.getMyPayments();
@@ -30,6 +33,9 @@ function BuyCredits() {
     { credits: 50, price: 50 },
   ];
 
+  /**
+   * Initiate a Stripe checkout session for purchasing credits.
+   */
   const handleBuy = async (credits) => {
     setLoading(true);
     try {

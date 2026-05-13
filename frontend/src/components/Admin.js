@@ -7,6 +7,9 @@ import PaymentController from "../controllers/paymentController";
 
 const TABS = ["users", "services", "requests", "transactions", "reviews", "payments"];
 
+/**
+ * Display a visual star rating representation using filled and empty stars.
+ */
 const StarDisplay = ({ rating }) => (
   <span className="text-warning">
     {"★".repeat(rating)}{"☆".repeat(5 - rating)}
@@ -30,8 +33,10 @@ function Admin() {
     fetchAdminData();
   }, []);
 
+  /**
+   * Fetch all admin data including users, services, transactions, reviews, payments, and requests.
+   */
   const fetchAdminData = async () => {
-    // Fetch users and services for admin listings.
     setLoading(true);
     setError("");
     try {
@@ -65,8 +70,10 @@ function Admin() {
 
   // ── Users ──────────────────────────────────────────────────────────────────
 
+  /**
+   * Confirm and delete a user account from the admin panel.
+   */
   const handleDeleteUser = async (userId, userName) => {
-    // Confirm and delete a selected user account.
     if (!window.confirm(`Delete user "${userName}"? This cannot be undone.`)) return;
     try {
       await UserController.deleteUser(userId);
@@ -76,8 +83,10 @@ function Admin() {
     }
   };
 
+  /**
+   * Toggle a user's role between admin and user after confirmation.
+   */
   const handleChangeRole = async (userId, currentRole) => {
-    // Toggle a user's role between admin and user.
     const newRole = currentRole === "admin" ? "user" : "admin";
     if (!window.confirm(`Change this user's role to "${newRole}"?`)) return;
     try {
@@ -88,6 +97,9 @@ function Admin() {
     }
   };
 
+  /**
+   * Toggle a user's active/inactive status after confirmation.
+   */
   const handleToggleActive = async (userId, currentlyActive) => {
     const action = currentlyActive ? "deactivate" : "activate";
     if (!window.confirm(`Are you sure you want to ${action} this user?`)) return;
@@ -101,8 +113,10 @@ function Admin() {
 
   // ── Services ───────────────────────────────────────────────────────────────
 
+  /**
+   * Confirm and delete a service from the admin panel.
+   */
   const handleDeleteService = async (serviceId, serviceTitle) => {
-    // Confirm and delete a selected service as admin.
     if (!window.confirm(`Delete service "${serviceTitle}"? This cannot be undone.`)) return;
     try {
       await ServiceController.deleteServiceAdmin(serviceId);
@@ -112,6 +126,9 @@ function Admin() {
     }
   };
 
+  /**
+   * Toggle a service's visibility status in the browse list.
+   */
   const handleToggleVisibility = async (serviceId) => {
     try {
       const result = await ServiceController.toggleServiceVisibility(serviceId);
@@ -125,6 +142,9 @@ function Admin() {
 
   // ── Reviews ────────────────────────────────────────────────────────────────
 
+  /**
+   * Confirm and delete a review from the admin panel.
+   */
   const handleDeleteReview = async (reviewId) => {
     if (!window.confirm("Delete this review?")) return;
     try {
@@ -135,6 +155,9 @@ function Admin() {
     }
   };
 
+  /**
+   * Retrieve the title of a service by its ID, or return a fallback identifier.
+   */
   const getServiceTitle = (serviceId) => {
     const service = services.find((s) => s.id === serviceId);
     return service ? service.title : `Service #${serviceId}`;
@@ -148,6 +171,9 @@ function Admin() {
     cancelled: "secondary",
   };
 
+  /**
+   * Generate the label for a tab including its count of items.
+   */
   const tabLabel = (tab) => {
     const labels = {
       users: `Users (${users.length})`,

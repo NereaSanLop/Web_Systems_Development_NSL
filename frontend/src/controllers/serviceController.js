@@ -93,6 +93,9 @@ class ServiceController {
     }
   }
 
+  /**
+   * Toggle a service's visibility status in the browse list through the API.
+   */
   static async toggleServiceVisibility(serviceId) {
     try {
       const response = await api.put(`/admin/services/${serviceId}/toggle-visibility`);
@@ -164,6 +167,9 @@ class ServiceController {
 
   // ── Reviews ────────────────────────────────────────────────────────────────
 
+  /**
+   * Submit a review for a completed service request.
+   */
   static async createReview(requestId, rating, comment) {
     try {
       const response = await api.post(`/service-requests/${requestId}/review`, { rating, comment });
@@ -173,6 +179,9 @@ class ServiceController {
     }
   }
 
+  /**
+   * Retrieve all reviews for a specific service.
+   */
   static async getServiceReviews(serviceId) {
     try {
       const response = await api.get(`/services/${serviceId}/reviews`);
@@ -182,6 +191,9 @@ class ServiceController {
     }
   }
 
+  /**
+   * Retrieve reviews submitted by the current user.
+   */
   static async getMyReviews() {
     try {
       const response = await api.get("/reviews/mine");
@@ -191,6 +203,9 @@ class ServiceController {
     }
   }
 
+  /**
+   * Retrieve all service requests for admin monitoring.
+   */
   static async getAllServiceRequestsAdmin() {
     try {
       const response = await api.get("/admin/service-requests");
@@ -200,6 +215,9 @@ class ServiceController {
     }
   }
 
+  /**
+   * Retrieve all reviews for admin moderation.
+   */
   static async getAllReviewsAdmin() {
     try {
       const response = await api.get("/admin/reviews");
@@ -209,6 +227,9 @@ class ServiceController {
     }
   }
 
+  /**
+   * Delete a review from the admin panel.
+   */
   static async deleteReviewAdmin(reviewId) {
     try {
       const response = await api.delete(`/admin/reviews/${reviewId}`);

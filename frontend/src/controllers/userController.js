@@ -41,6 +41,9 @@ class UserController {
     }
   }
 
+  /**
+   * Toggle a user's active/inactive status through the API.
+   */
   static async toggleUserActive(userId) {
     try {
       const response = await api.put(`/users/${userId}/toggle-active`);
