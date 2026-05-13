@@ -15,9 +15,14 @@ function Services() {
   const [requestMessage, setRequestMessage] = useState("");
   const [requestError, setRequestError] = useState("");
   const [requestLoading, setRequestLoading] = useState(false);
+  const [reviewsModalOpen, setReviewsModalOpen] = useState(false);
+  const [selectedServiceReviews, setSelectedServiceReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
+  /**
+   * Fetch services and outgoing requests using the provided filter set.
+   */
   const loadServices = async (activeFilters = {}) => {
-    // Fetch services using the current filter set.
     setError("");
     try {
       // Load outgoing requests together so cards can render a live Pending state.
@@ -39,39 +44,53 @@ function Services() {
     loadServices();
   }, []);
 
+  /**
+   * Update the filter state with the new input value from the search form.
+   */
   const handleFilterChange = (event) => {
-    // Keep filter form state in sync with user input.
     const { name, value } = event.target;
     setFilters((prev) => ({ ...prev, [name]: value }));
   };
 
+  /**
+   * Apply the current filters and reload the service list.
+   */
   const handleFilterSubmit = async (event) => {
-    // Apply filters and refresh results.
     event.preventDefault();
     setLoading(true);
     await loadServices(filters);
   };
 
+  /**
+   * Reset all filters to their default values and reload the full service list.
+   */
   const clearFilters = async () => {
-    // Reset filters and reload the full browse list.
     const reset = { q: "", minCost: "", maxCost: "" };
     setFilters(reset);
     setLoading(true);
     await loadServices(reset);
   };
 
+  /**
+   * Clear the authentication token and redirect to the home page.
+   */
   const handleLogout = () => {
-    // Clear session token and return to the home page.
     AuthController.logout();
     navigate("/");
   };
 
+  /**
+   * Open the confirmation modal for requesting a service.
+   */
   const openRequestModal = (service) => {
     setSelectedService(service);
     setRequestError("");
     setRequestMessage("");
   };
 
+  /**
+   * Close the service request confirmation modal, preventing closure if a request is being sent.
+   */
   const closeRequestModal = () => {
     if (requestLoading) {
       return;
@@ -82,6 +101,9 @@ function Services() {
     setRequestMessage("");
   };
 
+  /**
+   * Submit the service request and refresh the outgoing requests list.
+   */
   const confirmRequest = async () => {
     if (!selectedService) {
       return;
@@ -105,19 +127,64 @@ function Services() {
     }
   };
 
+  /**
+   * Check if there is an open (pending or accepted) request for the given service.
+   */
   const getOpenRequestForService = (serviceId) =>
-    // Treat requested/accepted as open so the user cannot create duplicate buys.
     outgoingRequests.find(
       (request) =>
         request.service_id === serviceId &&
         (request.status === "requested" || request.status === "accepted")
     );
 
+  /**
+   * Convert request status to a user-friendly label, mapping 'requested' to 'pending'.
+   */
   const getStatusLabel = (status) => {
     if (status === "requested") {
       return "pending";
     }
     return status;
+  };
+
+  /**
+   * Load and display reviews for a specific service.
+   */
+  const openReviewsModal = async (service) => {
+    setReviewsLoading(true);
+    setSelectedServiceReviews([]);
+    try {
+      const reviews = await ServiceController.getServiceReviews(service.id);
+      setSelectedServiceReviews(reviews);
+      setReviewsModalOpen(true);
+    } catch (err) {
+      console.error("Error loading reviews:", err);
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  /**
+   * Close the reviews modal.
+   */
+  const closeReviewsModal = () => {
+    setReviewsModalOpen(false);
+    setSelectedServiceReviews([]);
+  };
+
+  /**
+   * Display a visual star rating from a numeric value.
+   */
+  const renderStars = (rating) => {
+    const stars = [];
+    for (let i = 1; i <= 5; i++) {
+      stars.push(
+        <span key={i} style={{ color: i <= rating ? "#ffc107" : "#dee2e6" }}>
+          ★
+        </span>
+      );
+    }
+    return stars;
   };
 
   return (
@@ -231,9 +298,32 @@ function Services() {
                   <div className="card-body">
                     <h3 className="h5 card-title">{service.title}</h3>
                     <p className="card-text text-muted mb-2">{service.cost} credits</p>
-                    <p className="card-text small mb-0">
+                    <p className="card-text small mb-3">
                       Offered by: <strong>{service.owner_email}</strong>
                     </p>
+
+                    {service.avg_rating !== null ? (
+                      <div className="mb-3">
+                        <div className="mb-1">
+                          <span style={{ fontSize: "0.9rem" }}>
+                            {renderStars(Math.round(service.avg_rating))}
+                          </span>
+                          <span className="ms-2 small text-muted">
+                            {service.avg_rating.toFixed(1)} ({service.review_count} {service.review_count === 1 ? "review" : "reviews"})
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-outline-secondary btn-sm w-100 mb-2"
+                          onClick={() => openReviewsModal(service)}
+                        >
+                          View Reviews
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="small text-muted mb-3">No reviews yet</p>
+                    )}
+
                     <div className="mt-3">
                       {openRequest && (
                         <p className="small mb-2">
@@ -259,12 +349,11 @@ function Services() {
         )}
       </div>
 
-      {selectedService && (
+      {selectedService && !reviewsModalOpen && (
         <div
           className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-3"
           role="dialog"
           aria-modal="true"
-          // Single overlay layer keeps the dialog buttons clickable.
           style={{ backgroundColor: "rgba(0, 0, 0, 0.5)", zIndex: 2000 }}
         >
           <div className="card shadow w-100" style={{ maxWidth: "520px" }}>
@@ -297,6 +386,67 @@ function Services() {
                   disabled={requestLoading}
                 >
                   {requestLoading ? "Sending..." : "Yes"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {reviewsModalOpen && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-3"
+          role="dialog"
+          aria-modal="true"
+          style={{ backgroundColor: "rgba(0, 0, 0, 0.5)", zIndex: 2000 }}
+        >
+          <div className="card shadow w-100" style={{ maxWidth: "600px", maxHeight: "80vh", overflowY: "auto" }}>
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <h5 className="mb-0">Service Reviews</h5>
+                <button type="button" className="btn-close" aria-label="Close" onClick={closeReviewsModal} />
+              </div>
+
+              {reviewsLoading ? (
+                <div className="text-center py-4">
+                  <div className="spinner-border spinner-border-sm" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              ) : selectedServiceReviews.length === 0 ? (
+                <p className="text-muted text-center py-3">No reviews yet for this service.</p>
+              ) : (
+                <div className="review-list">
+                  {selectedServiceReviews.map((review) => (
+                    <div key={review.id} className="border-bottom pb-3 mb-3">
+                      <div className="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                          <p className="small mb-1">
+                            <strong>{review.reviewer_email}</strong>
+                          </p>
+                          <div style={{ fontSize: "0.9rem" }}>
+                            {renderStars(review.rating)}
+                          </div>
+                        </div>
+                        <span className="small text-muted">
+                          {new Date(review.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      {review.comment && (
+                        <p className="small text-muted mb-0 mt-2">{review.comment}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="d-flex justify-content-end gap-2 mt-3">
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={closeReviewsModal}
+                >
+                  Close
                 </button>
               </div>
             </div>
