@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from ..database import get_db
@@ -14,9 +15,9 @@ router = APIRouter()
 
 @router.get("/services/browse", response_model=list[ServiceResponse])
 def browse_services(
-    q: str | None = Query(default=None, max_length=120),
-    min_cost: int | None = Query(default=None, ge=1),
-    max_cost: int | None = Query(default=None, ge=1),
+    q: Optional[str] = Query(default=None, max_length=120),
+    min_cost: Optional[int] = Query(default=None, ge=1),
+    max_cost: Optional[int] = Query(default=None, ge=1),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):

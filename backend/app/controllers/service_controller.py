@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -60,9 +61,9 @@ class ServiceController:
     def browse_services(
         current_user: User,
         db: Session,
-        query: str | None = None,
-        min_cost: int | None = None,
-        max_cost: int | None = None,
+        query: Optional[str] = None,
+        min_cost: Optional[int] = None,
+        max_cost: Optional[int] = None,
     ):
         """Return services from other users with optional simple filters."""
         services_query = db.query(Service).filter(
@@ -332,7 +333,7 @@ class ServiceController:
     # ── Review methods ──────────────────────────────────────────────────────────
 
     @staticmethod
-    def create_review(request_id: int, rating: int, comment: str | None, current_user: User, db: Session):
+    def create_review(request_id: int, rating: int, comment: Optional[str], current_user: User, db: Session):
         """Submit a review for a completed service request (requester only, once)."""
         service_request = ServiceController._get_service_request_or_404(request_id, db)
 
