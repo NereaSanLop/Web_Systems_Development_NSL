@@ -61,6 +61,7 @@ class Transaction(Base):
     amount = Column(Integer, nullable=False)
     direction = Column(String, nullable=False)  # debit | credit
     reason = Column(String, nullable=False, default="service_payment")
+    external_transaction_id = Column(String, index=True, nullable=True)  # Store external transaction identifiers for traceability and auditing (e.g., stripe_session_id)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 
     service = relationship("Service")

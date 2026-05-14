@@ -118,6 +118,7 @@ class PaymentController:
             amount=payment.credits,
             direction="credit",
             reason="stripe_topup",
+            external_transaction_id=payment.stripe_session_id,  # Link to Stripe session for traceability
         )
         db.add(transaction)
         db.commit()
